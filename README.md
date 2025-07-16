@@ -1,4 +1,5 @@
 # GXR (Gen X Raider) Blockchain
+![banner](docs/static/img/banner.jpg)
 
 > ✅ Anti-inflasi, berbasis PoS & IBC, tanpa smart contract
 > ✅ Fokus pada efisiensi, distribusi adil, dan desentralisasi otomatis
