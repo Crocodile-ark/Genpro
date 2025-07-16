@@ -18,6 +18,15 @@ import (
 	"github.com/Crocodile-ark/gxrchaind/x/halving/types"
 )
 
+const (
+	// MinimumSupplyThreshold is the minimum supply threshold (1,000 GXR)
+	MinimumSupplyThreshold = 1000 * 1e8 // 1,000 GXR in ugen
+	// HalvingReductionRate is the reduction rate per halving cycle (15%)
+	HalvingReductionRate = "0.15"
+	// MainDenom is the main denomination
+	MainDenom = "ugen"
+)
+
 type (
 	Keeper struct {
 		cdc        codec.BinaryCodec
@@ -126,21 +135,37 @@ func (k Keeper) GetAllDistributionRecords(ctx sdk.Context) []types.DistributionR
 	return records
 }
 
-// CalculateMonthlyReward calculates the monthly reward amount for current cycle
-func (k Keeper) CalculateMonthlyReward(ctx sdk.Context) sdk.Coin {
-	info, found := k.GetHalvingInfo(ctx)
-	if !found {
-		return sdk.NewCoin("ugen", sdk.ZeroInt())
-	}
+// GetCurrentTotalSupply gets the current total supply of GXR
+func (k Keeper) GetCurrentTotalSupply(ctx sdk.Context) sdk.Coin {
+	supply := k.bankKeeper.GetSupply(ctx, MainDenom)
+	return supply
+}
 
-	// Each cycle is 5 years = 60 months
-	// Distribute total funds evenly over 60 months
-	monthlyAmount := info.TotalFundsForCycle.Amount.QuoRaw(60)
-	return sdk.NewCoin(info.TotalFundsForCycle.Denom, monthlyAmount)
+// CalculateMonthlyReward calculates the monthly reward amount based on current total supply
+func (k Keeper) CalculateMonthlyReward(ctx sdk.Context) sdk.Coin {
+	currentSupply := k.GetCurrentTotalSupply(ctx)
+	
+	// Calculate 15% of current supply for the 5-year cycle
+	reductionRate := sdk.MustNewDecFromStr(HalvingReductionRate)
+	cycleReduction := currentSupply.Amount.ToDec().Mul(reductionRate).TruncateInt()
+	
+	// Distribute the reduction over 60 months (5 years)
+	monthlyAmount := cycleReduction.QuoRaw(60)
+	
+	return sdk.NewCoin(MainDenom, monthlyAmount)
 }
 
 // DistributeMonthlyRewards distributes monthly rewards according to GXR specification
 func (k Keeper) DistributeMonthlyRewards(ctx sdk.Context) error {
+	// Check if total supply is below threshold
+	currentSupply := k.GetCurrentTotalSupply(ctx)
+	if currentSupply.Amount.LT(sdk.NewInt(MinimumSupplyThreshold)) {
+		k.Logger(ctx).Info("Halving stopped: total supply below minimum threshold",
+			"current_supply", currentSupply.String(),
+			"threshold", fmt.Sprintf("%dugen", MinimumSupplyThreshold))
+		return nil
+	}
+
 	params := k.GetParams(ctx)
 	monthlyReward := k.CalculateMonthlyReward(ctx)
 
@@ -153,26 +178,56 @@ func (k Keeper) DistributeMonthlyRewards(ctx sdk.Context) error {
 	delegatorAmount := monthlyReward.Amount.ToDec().Mul(params.DelegatorShare).TruncateInt()
 	dexAmount := monthlyReward.Amount.ToDec().Mul(params.DexShare).TruncateInt()
 
+	// Burn the monthly reward from total supply (this is the key change)
+	if err := k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(monthlyReward)); err != nil {
+		return fmt.Errorf("failed to burn monthly reward: %w", err)
+	}
+
 	// Get module account
 	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
+	if moduleAddr == nil {
+		return fmt.Errorf("module account not found")
+	}
+
+	// Create new coins for distribution (minted specifically for rewards)
+	rewardCoins := sdk.NewCoins(
+		sdk.NewCoin(MainDenom, validatorAmount),
+		sdk.NewCoin(MainDenom, delegatorAmount),
+		sdk.NewCoin(MainDenom, dexAmount),
+	)
+
+	// Mint the distribution amounts to module account
+	if err := k.bankKeeper.MintCoins(ctx, types.ModuleName, rewardCoins); err != nil {
+		return fmt.Errorf("failed to mint reward coins: %w", err)
+	}
 
 	// Distribute to validators (70%)
-	if err := k.distributeToValidators(ctx, sdk.NewCoin(monthlyReward.Denom, validatorAmount)); err != nil {
+	if err := k.distributeToValidators(ctx, sdk.NewCoin(MainDenom, validatorAmount)); err != nil {
 		return fmt.Errorf("failed to distribute to validators: %w", err)
 	}
 
 	// Distribute to delegators via PoS pool (20%)
-	if err := k.distributeToDelegators(ctx, sdk.NewCoin(monthlyReward.Denom, delegatorAmount)); err != nil {
+	if err := k.distributeToDelegators(ctx, sdk.NewCoin(MainDenom, delegatorAmount)); err != nil {
 		return fmt.Errorf("failed to distribute to delegators: %w", err)
 	}
 
 	// Distribute to DEX pool (10%)
-	if err := k.distributeToDEX(ctx, sdk.NewCoin(monthlyReward.Denom, dexAmount)); err != nil {
+	if err := k.distributeToDEX(ctx, sdk.NewCoin(MainDenom, dexAmount)); err != nil {
 		return fmt.Errorf("failed to distribute to DEX: %w", err)
 	}
 
 	// Update halving info
-	info, _ := k.GetHalvingInfo(ctx)
+	info, found := k.GetHalvingInfo(ctx)
+	if !found {
+		// Initialize halving info if not found
+		info = types.HalvingInfo{
+			CurrentCycle:       1,
+			CycleStartTime:     ctx.BlockTime().Unix(),
+			TotalFundsForCycle: currentSupply,
+			DistributedInCycle: sdk.NewCoin(MainDenom, sdk.ZeroInt()),
+		}
+	}
+	
 	info.DistributedInCycle = info.DistributedInCycle.Add(monthlyReward)
 	k.SetHalvingInfo(ctx, info)
 
@@ -186,7 +241,9 @@ func (k Keeper) DistributeMonthlyRewards(ctx sdk.Context) error {
 	k.SetDistributionRecord(ctx, record)
 
 	k.Logger(ctx).Info("Monthly rewards distributed",
-		"amount", monthlyReward.String(),
+		"burned_amount", monthlyReward.String(),
+		"distributed_amount", rewardCoins.String(),
+		"new_total_supply", k.GetCurrentTotalSupply(ctx).String(),
 		"cycle", info.CurrentCycle,
 		"month", record.Month,
 	)
@@ -208,11 +265,10 @@ func (k Keeper) distributeToValidators(ctx sdk.Context, amount sdk.Coin) error {
 		return nil
 	}
 
-	moduleAddr := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	
 	for _, validator := range validators {
 		valAddr, err := sdk.ValAddressFromBech32(validator.OperatorAddress)
 		if err != nil {
+			k.Logger(ctx).Error("Invalid validator address", "validator", validator.OperatorAddress, "error", err)
 			continue
 		}
 
@@ -232,6 +288,9 @@ func (k Keeper) distributeToValidators(ctx sdk.Context, amount sdk.Coin) error {
 func (k Keeper) distributeToDelegators(ctx sdk.Context, amount sdk.Coin) error {
 	// Send to distribution module's fee pool for delegators
 	feeCollectorAddr := k.accountKeeper.GetModuleAddress(authtypes.FeeCollectorName)
+	if feeCollectorAddr == nil {
+		return fmt.Errorf("fee collector account not found")
+	}
 	return k.bankKeeper.SendCoinsFromModuleToAccount(ctx, types.ModuleName, feeCollectorAddr, sdk.NewCoins(amount))
 }
 
@@ -255,44 +314,59 @@ func (k Keeper) getCurrentMonth(ctx sdk.Context, info types.HalvingInfo) uint64 
 func (k Keeper) CheckAndAdvanceCycle(ctx sdk.Context) error {
 	info, found := k.GetHalvingInfo(ctx)
 	if !found {
-		return fmt.Errorf("halving info not found")
+		// Initialize first cycle if not found
+		currentSupply := k.GetCurrentTotalSupply(ctx)
+		info = types.HalvingInfo{
+			CurrentCycle:       1,
+			CycleStartTime:     ctx.BlockTime().Unix(),
+			TotalFundsForCycle: currentSupply,
+			DistributedInCycle: sdk.NewCoin(MainDenom, sdk.ZeroInt()),
+		}
+		k.SetHalvingInfo(ctx, info)
+		return nil
+	}
+
+	// Check if total supply is below threshold
+	currentSupply := k.GetCurrentTotalSupply(ctx)
+	if currentSupply.Amount.LT(sdk.NewInt(MinimumSupplyThreshold)) {
+		k.Logger(ctx).Info("Halving cycles stopped: total supply below minimum threshold",
+			"current_supply", currentSupply.String(),
+			"threshold", fmt.Sprintf("%dugen", MinimumSupplyThreshold))
+		return nil
 	}
 
 	params := k.GetParams(ctx)
 	cycleStart := time.Unix(info.CycleStartTime, 0)
 	
-	// Check if current cycle duration has passed
+	// Check if current cycle duration has passed (5 years)
 	if ctx.BlockTime().Sub(cycleStart) >= params.HalvingCycleDuration {
 		// Advance to next cycle
-		if info.CurrentCycle >= 5 {
-			k.Logger(ctx).Info("All halving cycles completed")
-			return nil
-		}
-
 		nextCycle := info.CurrentCycle + 1
-		nextCycleFunds := k.calculateNextCycleFunds(info.TotalFundsForCycle)
-
+		
+		// The new cycle starts with the current total supply as 100%
+		// (This is automatic since we work with actual supply)
 		newInfo := types.HalvingInfo{
 			CurrentCycle:       nextCycle,
 			CycleStartTime:     ctx.BlockTime().Unix(),
-			TotalFundsForCycle: nextCycleFunds,
-			DistributedInCycle: sdk.NewCoin("ugen", sdk.ZeroInt()),
+			TotalFundsForCycle: currentSupply, // Current supply becomes 100% for next cycle
+			DistributedInCycle: sdk.NewCoin(MainDenom, sdk.ZeroInt()),
 		}
 
 		k.SetHalvingInfo(ctx, newInfo)
 		
 		k.Logger(ctx).Info("Advanced to next halving cycle",
 			"new_cycle", nextCycle,
-			"new_funds", nextCycleFunds.String(),
+			"current_supply", currentSupply.String(),
 		)
 	}
 
 	return nil
 }
 
-// calculateNextCycleFunds calculates funds for next cycle with 15% reduction
+// calculateNextCycleFunds is no longer used since we work with actual supply
+// Keeping for backwards compatibility
 func (k Keeper) calculateNextCycleFunds(currentFunds sdk.Coin) sdk.Coin {
-	// Reduce by 15% each cycle according to GXR specification
-	nextAmount := currentFunds.Amount.ToDec().Mul(sdk.MustNewDecFromStr("0.85")).TruncateInt()
-	return sdk.NewCoin(currentFunds.Denom, nextAmount)
+	// This function is deprecated in the new logic
+	// We now work directly with the current total supply
+	return currentFunds
 }
