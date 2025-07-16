@@ -1,23 +1,22 @@
 package types
 
-const (
-	// ModuleName defines the module name
-	ModuleName = "halving"
-
-	// StoreKey defines the primary module store key
-	StoreKey = ModuleName
-
-	// RouterKey is the message route for slashing
-	RouterKey = ModuleName
-
-	// QuerierRoute defines the module's query routing key
-	QuerierRoute = ModuleName
+var (
+	// Keys for store
+	CurrentHalvingKey     = []byte("current_halving")
+	LastDistributionKey   = []byte("last_distribution")
+	ValidatorUptimeKey    = []byte("validator_uptime")
 )
 
-// KVStore keys
-var (
-	HalvingParamsKey      = []byte{0x01}
-	CurrentHalvingKey     = []byte{0x02}
-	LastDistributionKey   = []byte{0x03}
-	TotalDistributedKey   = []byte{0x04}
+const (
+	// ModuleName is the name of the halving module
+	ModuleName = "halving"
+	
+	// StoreKey is the store key string for the halving module
+	StoreKey = ModuleName
+	
+	// RouterKey is the message route for the halving module
+	RouterKey = ModuleName
+	
+	// QuerierRoute is the querier route for the halving module
+	QuerierRoute = ModuleName
 )

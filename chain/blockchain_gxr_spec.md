@@ -1,326 +1,772 @@
-# GXR (Gen X Raider) Blockchain Specification — UPDATED (2024)
+# GXR Blockchain Technical Specification
 
-> ✅ **Sistem Halving Dinamis dengan Pengurangan Total Supply**
-> ✅ Dirancang tanpa smart contract, anti-inflasi, berbasis PoS & IBC
-> ✅ Fokus pada efisiensi, distribusi adil, dan desentralisasi otomatis
-
----
-
-## 1. IDENTITAS DASAR
-
-| Komponen           | Rincian                               |
-| ------------------ | ------------------------------------- |
-| **Nama Chain**     | Gen X Raider (GXR)                    |
-| **Ticker Token**   | GXR                                   |
-| **Denom Terkecil** | `ugen` (1 GXR = 100,000,000 ugen)     |
-| **Total Supply**   | 85,000,000 GXR *(awal, akan berkurang)* |
-| **Desimal**        | 8                                     |
-| **Smart Contract** | Tidak digunakan                       |
-| **Konsensus**      | Proof-of-Stake (PoS)                  |
-| **IBC Support**    | Aktif (GXR/TON, GXR/POLYGON, dll)     |
-| **Max Validator**  | 85 node                               |
-| **Waktu blok**     | 15 detik per blok                     |
----
-
-## 2. TOKENOMICS GXR
-
-### Total Supply Awal: 85,000,000 GXR
-
-| Alokasi             | Jumlah (GXR) | Persentase | Keterangan                                              |
-| ------------------- | ------------ | ---------- | ------------------------------------------------------- |
-| Airdrop & Farming   | 17,000,000   | 20%        | Distribusi awal via Telegram bot farming                |
-| Developer Core      | 5,950,000    | 7%         | Vesting keras 5 tahun, 10% unlock tiap 6 bulan          |
-| Tim Inti (3 orang)  | 5,950,000    | 7%         | 3% / 2% / 2%, soft vesting 3 tahun                      |
-| LP & Market         | 8,500,000    | 10%        | Likuiditas awal (GXR/TON, GXR/POLYGON, dll)             |
-| Grant (3–7 pihak)   | 8,500,000    | 10%        | Hibah proyek dan mitra kolaborasi                       |
-| Pool Staking (PoS)  | 8,500,000    | 10%        | Reward untuk delegator aktif                            |
-| **Halving Reserve** | 21,250,000   | 25%        | **Tidak digunakan dalam sistem baru**                   |
-| Cadangan/Ekspansi   | 8,500,000    | 10%        | Dana darurat dan pengembangan ekosistem                 |
-| Validator Awal (30) | 850,000      | 1%         | 0.5% tahun 1 dan 0.5% tahun 2 jika aktif >20 hari/bulan |
-
-**⚠️ Catatan Penting**: Dalam sistem halving yang baru, tidak ada lagi "Halving Fund" yang terpisah. Sistem halving bekerja langsung dengan total supply yang ada.
+## Version: 2.0.0
+**Last Updated**: December 2024
 
 ---
 
-## 3. SISTEM HALVING DINAMIS BARU
+## Table of Contents
 
-### 🔥 Revolusi Sistem Halving
-
-Sistem halving GXR yang baru **mengubah cara kerja fundamental** dari sistem reward tradisional:
-
-- **Bukan lagi** distribusi dari pool tetap
-- **Sekarang** pengurangan total supply secara langsung
-- **Setiap 5 tahun**: 15% dari total supply saat ini dikurangi
-- **Deflasi berkelanjutan**: Total supply terus berkurang selamanya
-
-### Cara Kerja Sistem Baru:
-
-1. **Perhitungan Bulanan**: 
-   - Sistem menghitung 15% dari total supply saat ini
-   - Dibagi menjadi 60 distribusi bulanan (5 tahun)
-   - Setiap bulan: `(Current Supply × 0.15) ÷ 60`
-
-2. **Proses Burn & Mint**:
-   - Sejumlah reward bulanan di-**burn** dari total supply
-   - Jumlah yang sama di-**mint** untuk distribusi reward
-   - **Net effect**: Total supply berkurang setiap bulan
-
-3. **Siklus Berkelanjutan**:
-   - Setelah 5 tahun, sisa supply menjadi **100% baru** untuk siklus berikutnya
-   - Tidak ada batasan jumlah siklus
-   - Sistem berhenti otomatis jika supply < 1.000 GXR
-
-### Proyeksi Siklus Halving:
-
-| Siklus | Periode      | Supply Awal    | 15% Reward     | Supply Akhir   | Bulanan (±)  |
-|--------|--------------|----------------|----------------|----------------|--------------|
-| 1      | Tahun 1–5    | 85,000,000     | 12,750,000     | 72,250,000     | 212,500      |
-| 2      | Tahun 6–10   | 72,250,000     | 10,837,500     | 61,412,500     | 180,625      |
-| 3      | Tahun 11–15  | 61,412,500     | 9,211,875      | 52,200,625     | 153,531      |
-| 4      | Tahun 16–20  | 52,200,625     | 7,830,094      | 44,370,531     | 130,501      |
-| 5      | Tahun 21–25  | 44,370,531     | 6,655,580      | 37,714,951     | 110,926      |
-| ...    | ...          | ...            | ...            | ...            | ...          |
-| ∞      | Tahun ∞      | < 1,000 GXR    | **AUTO STOP**  | < 1,000 GXR    | 0            |
-
-### Distribusi Halving per Siklus:
-
-- **70%** → Validator aktif (dibagi rata)
-- **20%** → PoS Pool (delegator)
-- **10%** → DEX Pool (likuiditas GXR/TON, GXR/POLYGON, dll)
-
-### Keunggulan Sistem Baru:
-
-1. **Deflasi Berkelanjutan**: Supply terus berkurang selamanya
-2. **Scarcity Alami**: Semakin lama semakin langka
-3. **Sustainable**: Tidak pernah habis sampai threshold minimum
-4. **Predictable**: Semua perhitungan deterministik
-5. **Self-Regulating**: Otomatis berhenti di batas minimum
+1. [System Overview](#system-overview)
+2. [Halving Mechanism](#halving-mechanism)
+3. [Validator Requirements](#validator-requirements)
+4. [Bot Infrastructure](#bot-infrastructure)
+5. [Immutable Architecture](#immutable-architecture)
+6. [Technical Implementation](#technical-implementation)
+7. [Security Features](#security-features)
+8. [Performance Specifications](#performance-specifications)
+9. [API Reference](#api-reference)
+10. [Deployment Guide](#deployment-guide)
 
 ---
 
-## 4. VALIDATOR & DELEGATOR
+## System Overview
 
-### Validator:
+### Core Principles
 
-- **Max Node**: 85 validator
-- **Komisi Awal**: 5%–10% (dinamis)
-- **Reward**: Bulanan dari halving + fee transaksi
-- **Unstake Fee Delegator**: 0.5% (masuk ke validator)
-- **Nonaktif >10 hari/bulan**: Tidak terima reward bulan itu
-- **Bot Wajib**: Setiap validator harus menjalankan bot otomatis
+GXR is an immutable blockchain built on Cosmos SDK with the following core principles:
 
-### Delegator:
+- **Immutability**: No governance, no upgrades, no parameter changes
+- **Deflation**: Actual supply reduction through burn-and-mint mechanism
+- **Validator Accountability**: Strict requirements with automated enforcement
+- **Predictability**: All operations follow deterministic rules
+- **Single Token**: Only GXR exists in the ecosystem
 
-- **Reward**: Dari PoS Pool (20% dari halving bulanan)
-- **Unstake Fee**: 0.5% ke validator
-- **Minimum Stake**: 1 GXR
-- **Pilih validator**: Berdasarkan performa dan komisii
+### Architecture
 
----
-
-## 5. SISTEM FEE TRANSAKSI
-
-### A. Fee Transaksi Umum
-
-Digunakan untuk semua transaksi biasa:
-
-| Komponen               | Persentase |
-| ---------------------- | ---------- |
-| Validator              | 40%        |
-| DEX Pool (Auto Refill) | 30%        |
-| PoS Pool (Delegator)   | 30%        |
-
-### B. Fee dari Aktivitas LP Komunitas (Farming)
-
-Untuk pool komunitas buatan pengguna:
-
-| Komponen               | Persentase |
-| ---------------------- | ---------- |
-| Validator              | 30%        |
-| DEX Pool (Auto Refill) | 25%        |
-| LP Komunitas (reward)  | 25%        |
-| PoS Pool (Delegator)   | 20%        |
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    GXR Blockchain                           │
+├─────────────────────────────────────────────────────────────┤
+│  Cosmos SDK Base Layer                                      │
+│  ├── Tendermint Consensus                                   │
+│  ├── Cosmos SDK Framework                                   │
+│  └── Custom Modules                                         │
+│      ├── x/halving (Custom)                                 │
+│      ├── x/bank (Modified)                                  │
+│      ├── x/staking (Modified)                               │
+│      └── x/slashing (Modified)                              │
+├─────────────────────────────────────────────────────────────┤
+│  Bot Infrastructure                                         │
+│  ├── Validator Monitor                                      │
+│  ├── Rebalancer                                             │
+│  ├── IBC Relayer                                            │
+│  ├── DEX Manager                                            │
+│  ├── Reward Distributor                                     │
+│  └── Telegram Alert System                                  │
+└─────────────────────────────────────────────────────────────┘
+```
 
 ---
 
-## 6. SISTEM LP: TIM & KOMUNITAS
+## Halving Mechanism
 
-### A. LP Resmi
+### Timeline Structure
 
-- **Dibuat oleh tim GXR**: Pool utama
-- **Likuiditas awal**: Dari alokasi 10% LP & Market
-- **Dikelola oleh bot validator**: Auto refill, auto balancing
-- **Menggunakan aturan fee default**: 40/30/30
+```
+Halving Cycle (5 years)
+├── Distribution Period (2 years)
+│   ├── Monthly Distribution (30 days)
+│   │   ├── Burn Phase
+│   │   └── Mint & Distribute Phase
+│   └── Repeat for 24 months
+└── Pause Period (3 years)
+    └── No Distribution
+```
 
-### B. LP Komunitas
+### Mathematical Formula
 
-- **Siapa pun boleh buat LP**: GXR/TOKEN lain
-- **Insentif berbasis fee farming**: 30/25/25/20
-- **Dideteksi oleh bot validator**: Diberi reward otomatis
-- **Tidak butuh smart contract**: Cukup whitelist address LP aktif
+#### Halving Fund Calculation
+```
+HalvingFund = CurrentSupply × 0.15
+```
 
----
+#### Monthly Distribution
+```
+MonthlyAmount = HalvingFund ÷ 24
+```
 
-## 7. BOT VALIDATOR (WAJIB)
+#### Burn-and-Mint Process
+```
+1. Burn: MonthlyAmount from CurrentSupply
+2. Mint: MonthlyAmount for distribution
+3. Net Effect: CurrentSupply decreases by MonthlyAmount
+```
 
-### Fungsi Bot:
+### Distribution Allocation
 
-- **Auto IBC Relayer**: Sinkronisasi antar-chain
-- **Auto Rebalancing**: Rebalancing harga antar pool
-- **Auto Reward Distribution**: Distribusi reward bulanan otomatis
-- **Auto Refill DEX Pool**: Dari fee transaksi
-- **Telegram Alert**: Uptime, pool imbalance, emergency
-- **Health Monitoring**: Connection health, packet relaying
+| Recipient | Percentage | Years Active | Conditions |
+|-----------|------------|--------------|------------|
+| Validators | 70% | 1-2 | >20 days uptime/month |
+| Delegators | 20% | 1-2 | Via fee pool |
+| DEX Pools | 10% | 1-2 only | Bot managed |
 
-### Proteksi Bot:
+### Supply Trajectory
 
-- **Max swap harian**: 10.000 GXR/hari
-- **Cooldown swap**: 30 menit jika lonjakan ekstrem
-- **Emergency mode**: Jika harga GXR > $10
-- **Auto recovery**: Reconnection otomatis pada network issues
-- **Rate limiting**: Telegram alerts (max 10/menit)
+```
+Cycle 1: 1,000,000 GXR
+├── HalvingFund: 150,000 GXR
+├── Monthly: 6,250 GXR
+└── Remaining: 850,000 GXR
 
-### Komponen Bot:
+Cycle 2: 850,000 GXR
+├── HalvingFund: 127,500 GXR
+├── Monthly: 5,312.5 GXR
+└── Remaining: 722,500 GXR
 
-1. **Reward Distributor**: Trigger halving distribution
-2. **Rebalancer**: Cross-chain price balancing
-3. **DEX Manager**: Pool management & refill
-4. **IBC Relayer**: Cross-chain packet relaying
-5. **Telegram Alert**: Real-time monitoring & alerts
+Cycle 3: 722,500 GXR
+├── HalvingFund: 108,375 GXR
+├── Monthly: 4,515.625 GXR
+└── Remaining: 614,125 GXR
 
----
+...continues until supply < 1,000 GXR
+```
 
-## 8. IMPLEMENTASI TEKNIS
+### Implementation Details
 
-### Halving Module:
+#### Halving Module (`x/halving`)
 
+**Key Functions:**
+- `CheckAndAdvanceHalvingCycle()`: Monitors 5-year cycles
+- `ShouldDistribute()`: Checks 30-day distribution timing
+- `DistributeHalvingRewards()`: Executes burn-and-mint process
+- `CheckAndUpdateDistributionStatus()`: Manages 2-year/3-year periods
+
+**State Management:**
 ```go
-// Konstanta sistem
+type HalvingInfo struct {
+    CurrentCycle       uint64
+    CycleStartTime     int64
+    TotalSupply        types.Coin
+    HalvingFund        types.Coin
+    DistributionActive bool
+    DistributionStart  int64
+    DistributedAmount  types.Coin
+    PauseStart         int64
+    LastMonthlyDistrib int64
+}
+```
+
+---
+
+## Validator Requirements
+
+### Activity Metrics
+
+#### Uptime Calculation
+```
+Monthly Uptime = (Active Days / 30) × 100%
+Reward Eligibility = Monthly Uptime > 66.67% (>20 days)
+```
+
+#### Tracking Implementation
+```go
+type ValidatorUptime struct {
+    ValidatorAddress string
+    CurrentMonth     uint64
+    InactiveDays     uint64
+    LastActiveTime   time.Time
+    LastCheck        time.Time
+    MissedBlocks     uint64
+    BotRunning       bool
+    LastBotHeartbeat time.Time
+    RewardEligible   bool
+}
+```
+
+### Slashing Conditions
+
+| Condition | Penalty | Recovery |
+|-----------|---------|----------|
+| Bot Not Running | Slashing | Restart bot |
+| >10 Days Inactive | Reward Forfeiture | Increase uptime |
+| Extended Downtime | Jail + Slash | Manual recovery |
+
+### Bot Requirements
+
+#### Mandatory Components
+- **Validator Monitor**: Uptime tracking
+- **Rebalancer**: Hourly operations
+- **IBC Relayer**: Cross-chain operations
+- **DEX Manager**: Pool management
+- **Reward Distributor**: Reward handling
+- **Telegram Alert**: Notifications
+
+#### Heartbeat Protocol
+```
+Interval: 1 minute
+Timeout: 5 minutes
+Grace Period: 10 minutes
+Slashing Delay: 1 hour
+```
+
+---
+
+## Bot Infrastructure
+
+### Rebalancer Specifications
+
+#### Operational Constraints
+- **Frequency**: Exactly 1 hour intervals
+- **Price Threshold**: $5.00 USD
+- **Monitor Mode**: 24-hour suspension
+- **Recovery**: Automatic after 24 hours
+
+#### State Machine
+```
+Active → (Price ≥ $5) → Monitor Only → (24h + Price < $5) → Active
+Active → (Error) → Error State → (1h timeout) → Active
+Active → (Emergency) → Emergency Stop → (Manual) → Active
+```
+
+### Validator Monitor
+
+#### Tracking Metrics
+- **Uptime**: Daily activity status
+- **Bot Health**: Heartbeat monitoring
+- **Reward Eligibility**: Monthly calculations
+- **Alert Triggers**: Inactivity thresholds
+
+#### Monthly Reset Process
+```go
+func (vm *ValidatorMonitor) performMonthlyReset() {
+    // Store previous month statistics
+    vm.monthlyStats[oldMonth] = &MonthlyStats{
+        TotalValidators:    vm.totalValidators,
+        ActiveValidators:   vm.activeValidators,
+        InactiveValidators: vm.totalInactiveValidators,
+        ForfeitedRewards:   vm.totalForfeitedRewards,
+        AverageUptime:      vm.calculateAverageUptime(),
+    }
+    
+    // Reset all validator counters
+    for _, status := range vm.validators {
+        status.CurrentMonth = vm.currentMonth
+        status.InactiveDays = 0
+        status.RewardEligible = true
+    }
+}
+```
+
+### Telegram Alert System
+
+#### Alert Categories
+```go
 const (
-    MinimumSupplyThreshold = 1000 * 1e8 // 1,000 GXR
-    HalvingReductionRate   = "0.15"     // 15%
-    HalvingCycleDuration   = 5 * 365 * 24 * time.Hour // 5 tahun
+    AlertTypeInfo AlertType = iota
+    AlertTypeWarning
+    AlertTypeError
+    AlertTypeCritical
+    AlertTypeSuccess
 )
+```
 
-// Fungsi utama halving
-func CalculateMonthlyReward(currentSupply sdk.Coin) sdk.Coin {
-    reductionRate := sdk.MustNewDecFromStr("0.15")
-    cycleReduction := currentSupply.Amount.ToDec().Mul(reductionRate)
-    monthlyAmount := cycleReduction.QuoRaw(60) // 60 bulan
-    return sdk.NewCoin("ugen", monthlyAmount.TruncateInt())
-}
+#### Rate Limiting
+- **Max Rate**: 10 alerts per minute
+- **Queue Size**: 100 pending alerts
+- **Retry Logic**: 3 attempts with 5-second delays
+- **Emergency Bypass**: Critical alerts skip rate limits
 
-func DistributeMonthlyRewards(ctx sdk.Context) error {
-    // 1. Burn monthly reward dari total supply
-    // 2. Mint reward untuk distribusi
-    // 3. Distribute: 70% validator, 20% delegator, 10% DEX
-    // 4. Update halving info
-    // 5. Record distribution
+---
+
+## Immutable Architecture
+
+### Genesis Parameters
+
+**Chain Parameters (FIXED):**
+```json
+{
+  "chain_id": "gxr-1",
+  "initial_supply": "85000000000000ugen",
+  "min_supply_threshold": "1000000000ugen",
+  "halving_cycle_duration": "157680000s",
+  "distribution_period": "63072000s",
+  "pause_period": "94608000s",
+  "halving_reduction_rate": "0.15",
+  "validator_share": "0.70",
+  "delegator_share": "0.20",
+  "dex_share": "0.10"
 }
 ```
 
-### Bot Architecture:
+**Disabled Features:**
+- Governance module
+- Smart contract execution
+- NFT support
+- New token creation
+- Parameter changes
+- Software upgrades
+
+### Consensus Parameters
+
+```json
+{
+  "block": {
+    "max_bytes": "1048576",
+    "max_gas": "100000000",
+    "time_iota_ms": "1000"
+  },
+  "evidence": {
+    "max_age_num_blocks": "100000",
+    "max_age_duration": "172800000000000",
+    "max_bytes": "1048576"
+  },
+  "validator": {
+    "pub_key_types": ["ed25519"]
+  }
+}
+```
+
+---
+
+## Technical Implementation
+
+### Halving Module Structure
+
+```
+x/halving/
+├── keeper/
+│   ├── keeper.go           # Core halving logic
+│   ├── distribution.go     # Reward distribution
+│   ├── validator.go        # Validator tracking
+│   └── query.go           # Query handlers
+├── types/
+│   ├── halving.pb.go      # Protobuf definitions
+│   ├── keys.go            # Storage keys
+│   ├── params.go          # Parameters
+│   └── query.pb.go        # Query types
+├── client/
+│   └── cli/
+│       ├── query.go       # CLI queries
+│       └── tx.go          # CLI transactions
+└── module.go              # Module definition
+```
+
+### Key Storage Design
 
 ```go
-// Bot utama
-type GXRBot struct {
-    ibcRelayer        *IBCRelayer
-    rewardDistributor *RewardDistributor
-    dexManager        *DEXManager
-    rebalancer        *Rebalancer
-    telegramAlert     *TelegramAlert
-}
+var (
+    CurrentHalvingKey     = []byte("current_halving")
+    LastDistributionKey   = []byte("last_distribution")
+    ValidatorUptimeKey    = []byte("validator_uptime")
+    DistributionRecordKey = []byte("distribution_record")
+)
+```
 
-// Setiap komponen berjalan independen dengan error handling
+### State Transitions
+
+#### Halving Cycle Advancement
+```go
+func (k Keeper) CheckAndAdvanceHalvingCycle(ctx sdk.Context) error {
+    info, found := k.GetHalvingInfo(ctx)
+    cycleStart := time.Unix(info.CycleStartTime, 0)
+    
+    if ctx.BlockTime().Sub(cycleStart) >= HalvingCycleDuration {
+        return k.advanceToNextCycle(ctx, info)
+    }
+    
+    return nil
+}
+```
+
+#### Monthly Distribution
+```go
+func (k Keeper) DistributeHalvingRewards(ctx sdk.Context) error {
+    if !k.ShouldDistribute(ctx) {
+        return nil
+    }
+    
+    monthlyAmount := k.calculateMonthlyDistribution(ctx, info)
+    
+    // Burn from total supply
+    k.bankKeeper.BurnCoins(ctx, types.ModuleName, sdk.NewCoins(monthlyAmount))
+    
+    // Mint for distribution
+    k.bankKeeper.MintCoins(ctx, types.ModuleName, sdk.NewCoins(monthlyAmount))
+    
+    // Distribute to recipients
+    return k.distributeRewards(ctx, monthlyAmount, info)
+}
 ```
 
 ---
 
-## 9. KEAMANAN & COMPLIANCE
+## Security Features
 
-### Fitur Keamanan:
+### Immutability Guarantees
 
-- **Immutable Genesis**: Semua parameter dikunci dari awal
-- **No Governance**: Tidak ada voting yang bisa mengubah aturan
-- **Anti-Manipulation**: Bot protection untuk extreme price movements
-- **Rate Limiting**: Semua operasi bot dengan rate limiting
-- **Auto Recovery**: Automatic reconnection pada network issues
+#### Genesis Lock
+- All parameters fixed at genesis
+- No governance module compiled
+- No upgrade handler registered
+- No parameter change proposals
 
-### Compliance:
-
-- **Audit Trail**: Semua transaksi tercatat on-chain
-- **Transparent**: Open source dan dapat diverifikasi
-- **Predictable**: Semua perhitungan deterministik
-- **Decentralized**: Tidak ada central authority
-
----
-
-## 10. CIRI KHAS GXR
-
-| Fitur                   | Penjelasan                                                                                                            |
-| ----------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| **Deflasi Berkelanjutan** | Total supply terus berkurang setiap bulan                                                                           |
-| **No Smart Contract**   | Sederhana, ringan, aman                                                                                              |
-| **Dynamic Supply**      | Supply berubah berdasarkan distribusi halving                                                                        |
-| **Auto Fee Refill**     | DEX Pool terisi otomatis dari fee                                                                                    |
-| **Bot Mandatory**       | Setiap validator wajib menjalankan bot otomatis                                                                       |
-| **Sustainable Halving** | Sistem halving yang sustainable dengan auto-stop                                                                     |
-| **LP Komunitas**        | Komunitas bebas buat LP, reward otomatis                                                                             |
-| **Immutable Genesis**   | Semua parameter dikunci dari awal, tidak ada governance                                                              |
-
----
-
-## 11. MONITORING & ANALYTICS
-
-### Query Commands:
-
+#### Code Verification
 ```bash
-# Cek total supply saat ini
-gxrchaind query bank total --denom ugen
+# Verify immutability
+gxrchaind query gov params voting    # Should fail
+gxrchaind query upgrade plan         # Should fail
+gxrchaind query params subspace      # Should be empty
+```
 
-# Cek info halving
+### Slashing Protection
+
+#### Progressive Penalties
+```go
+type SlashingSchedule struct {
+    FirstOffense:  sdk.NewDecWithPrec(1, 2)  // 1%
+    SecondOffense: sdk.NewDecWithPrec(5, 2)  // 5%
+    ThirdOffense:  sdk.NewDecWithPrec(10, 2) // 10%
+    Jailing:      true
+}
+```
+
+#### Bot Enforcement
+- Heartbeat monitoring
+- Automatic slashing for non-compliance
+- Grace period for temporary failures
+- Manual recovery procedures
+
+---
+
+## Performance Specifications
+
+### Throughput Metrics
+
+| Metric | Value | Unit |
+|--------|-------|------|
+| Block Time | 6 | seconds |
+| TPS | 1,000 | transactions/second |
+| Block Size | 1 | MB |
+| Gas Limit | 100,000,000 | gas units |
+
+### Network Requirements
+
+#### Validator Hardware
+- **CPU**: 8+ cores
+- **RAM**: 32+ GB
+- **Storage**: 1+ TB NVMe SSD
+- **Network**: 1 Gbps connection
+
+#### Bot Hardware
+- **CPU**: 2+ cores
+- **RAM**: 4+ GB
+- **Storage**: 100+ GB SSD
+- **Network**: 100 Mbps connection
+
+### Monitoring Thresholds
+
+```yaml
+alerts:
+  high_memory_usage: 80%
+  high_cpu_usage: 85%
+  disk_space_low: 90%
+  network_latency_high: 500ms
+  block_time_slow: 10s
+  peer_count_low: 5
+```
+
+---
+
+## API Reference
+
+### Chain Queries
+
+#### Halving Information
+```bash
+# Get current halving info
 gxrchaind query halving info
 
-# Cek distribusi history
-gxrchaind query halving distributions
+# Get validator uptime
+gxrchaind query halving uptime [validator-address]
 
-# Cek status validator
-gxrchaind query staking validators
+# Get distribution records
+gxrchaind query halving distributions --limit 100
+
+# Get monthly statistics
+gxrchaind query halving monthly-stats --month 12
 ```
 
-### Metrics Penting:
+#### Bank Queries
+```bash
+# Get total supply
+gxrchaind query bank total --denom ugen
 
-- **Current Total Supply**: Supply saat ini
-- **Monthly Burn Rate**: Jumlah yang di-burn per bulan
-- **Halving Cycle Progress**: Progress siklus saat ini
-- **Validator Uptime**: Uptime validator
-- **Bot Health**: Status kesehatan bot
+# Get account balance
+gxrchaind query bank balance [address] ugen
+
+# Get supply information
+gxrchaind query bank supply ugen
+```
+
+### Bot API Endpoints
+
+#### Health Check
+```bash
+GET /health
+Response: {"status": "healthy", "timestamp": "2024-12-01T00:00:00Z"}
+```
+
+#### Component Status
+```bash
+GET /status
+Response: {
+  "version": "2.0.0",
+  "running": true,
+  "uptime": "24h30m15s",
+  "components": {
+    "rebalancer": {"state": "active"},
+    "validator_monitor": {"active_validators": 150},
+    "telegram_alert": {"alerts_sent": 1250}
+  }
+}
+```
+
+#### Metrics
+```bash
+GET /metrics
+Response: Prometheus-formatted metrics
+```
 
 ---
 
-## 12. ROADMAP TEKNIS
+## Deployment Guide
 
-### Phase 1: Core Implementation ✅
-- [x] Halving module dengan supply reduction
-- [x] Bot validator otomatis
-- [x] IBC integration
-- [x] Telegram monitoring
+### Prerequisites
 
-### Phase 2: Enhancement 🚧
-- [ ] Web dashboard untuk monitoring
-- [ ] Advanced analytics
-- [ ] Mobile app untuk delegators
-- [ ] API improvements
+#### System Requirements
+```bash
+# Ubuntu 22.04 LTS
+sudo apt update
+sudo apt install -y build-essential git curl jq
 
-### Phase 3: Ecosystem 🔮
-- [ ] Cross-chain DEX integration
-- [ ] Advanced rebalancing algorithms
-- [ ] DeFi protocols integration
-- [ ] NFT marketplace
+# Go 1.21+
+wget https://go.dev/dl/go1.21.0.linux-amd64.tar.gz
+sudo tar -C /usr/local -xzf go1.21.0.linux-amd64.tar.gz
+echo 'export PATH=$PATH:/usr/local/go/bin' >> ~/.bashrc
+```
+
+#### Network Configuration
+```bash
+# Open required ports
+sudo ufw allow 26656/tcp  # P2P
+sudo ufw allow 26657/tcp  # RPC
+sudo ufw allow 1317/tcp   # REST API
+sudo ufw allow 9090/tcp   # gRPC
+```
+
+### Chain Deployment
+
+#### 1. Build Binary
+```bash
+git clone https://github.com/your-org/gxr-chain
+cd gxr-chain/chain
+make build
+sudo cp build/gxrchaind /usr/local/bin/
+```
+
+#### 2. Initialize Node
+```bash
+gxrchaind init [moniker] --chain-id gxr-1
+gxrchaind add-genesis-account [address] 1000000000000ugen
+gxrchaind gentx [key-name] 1000000ugen --chain-id gxr-1
+gxrchaind collect-gentxs
+```
+
+#### 3. Configure Node
+```bash
+# Edit config.toml
+sed -i 's/timeout_commit = "5s"/timeout_commit = "6s"/g' ~/.gxrchaind/config/config.toml
+sed -i 's/prometheus = false/prometheus = true/g' ~/.gxrchaind/config/config.toml
+
+# Edit app.toml
+sed -i 's/minimum-gas-prices = ""/minimum-gas-prices = "0.001ugen"/g' ~/.gxrchaind/config/app.toml
+```
+
+#### 4. Start Node
+```bash
+# Create systemd service
+sudo tee /etc/systemd/system/gxrchaind.service > /dev/null <<EOF
+[Unit]
+Description=GXR Chain Node
+After=network-online.target
+
+[Service]
+User=$(whoami)
+ExecStart=/usr/local/bin/gxrchaind start
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable gxrchaind
+sudo systemctl start gxrchaind
+```
+
+### Bot Deployment
+
+#### 1. Build Bot
+```bash
+cd gxr-chain/bot
+go build -o gxr-bot
+sudo cp gxr-bot /usr/local/bin/
+```
+
+#### 2. Configure Bot
+```bash
+mkdir -p ~/.gxr-bot/config
+cat > ~/.gxr-bot/config/bot.yaml << EOF
+chain_rpc: "tcp://localhost:26657"
+chain_grpc: "localhost:9090"
+chain_id: "gxr-1"
+validator_address: "gxrvaloper1..."
+validator_name: "MyValidator"
+telegram_enabled: true
+telegram_token: "YOUR_BOT_TOKEN"
+telegram_chat_id: "YOUR_CHAT_ID"
+monitoring_enabled: true
+health_check_enabled: true
+EOF
+```
+
+#### 3. Start Bot
+```bash
+# Create systemd service
+sudo tee /etc/systemd/system/gxr-bot.service > /dev/null <<EOF
+[Unit]
+Description=GXR Bot Service
+After=network-online.target gxrchaind.service
+
+[Service]
+User=$(whoami)
+ExecStart=/usr/local/bin/gxr-bot --config ~/.gxr-bot/config/bot.yaml
+Restart=always
+RestartSec=3
+LimitNOFILE=65535
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable gxr-bot
+sudo systemctl start gxr-bot
+```
+
+### Monitoring Setup
+
+#### 1. Install Prometheus
+```bash
+wget https://github.com/prometheus/prometheus/releases/download/v2.40.0/prometheus-2.40.0.linux-amd64.tar.gz
+tar xzf prometheus-2.40.0.linux-amd64.tar.gz
+sudo mv prometheus-2.40.0.linux-amd64/prometheus /usr/local/bin/
+```
+
+#### 2. Configure Prometheus
+```yaml
+# prometheus.yml
+global:
+  scrape_interval: 15s
+
+scrape_configs:
+  - job_name: 'gxr-chain'
+    static_configs:
+      - targets: ['localhost:26660']
+  
+  - job_name: 'gxr-bot'
+    static_configs:
+      - targets: ['localhost:8080']
+```
+
+#### 3. Install Grafana
+```bash
+sudo apt-get install -y software-properties-common
+sudo add-apt-repository "deb https://packages.grafana.com/oss/deb stable main"
+wget -q -O - https://packages.grafana.com/gpg.key | sudo apt-key add -
+sudo apt-get update
+sudo apt-get install grafana
+```
 
 ---
 
-**⚡ GXR: The Future of Deflationary Blockchain**
+## Troubleshooting
 
-*Sistem halving yang benar-benar revolusioner - mengurangi supply secara langsung, bukan sekedar distribusi dari pool tetap.*
+### Common Issues
+
+#### Chain Won't Start
+```bash
+# Check logs
+journalctl -u gxrchaind -f
+
+# Common fixes
+gxrchaind unsafe-reset-all
+gxrchaind start --pruning=nothing
+```
+
+#### Bot Connection Issues
+```bash
+# Test chain connection
+gxr-bot test
+
+# Check bot logs
+journalctl -u gxr-bot -f
+
+# Verify configuration
+gxr-bot status
+```
+
+#### Telegram Alerts Not Working
+```bash
+# Test token
+curl -s "https://api.telegram.org/bot$TOKEN/getMe"
+
+# Test chat ID
+curl -s "https://api.telegram.org/bot$TOKEN/sendMessage?chat_id=$CHAT_ID&text=test"
+```
+
+### Performance Tuning
+
+#### Chain Optimization
+```bash
+# Increase file limits
+echo "* soft nofile 65536" >> /etc/security/limits.conf
+echo "* hard nofile 65536" >> /etc/security/limits.conf
+
+# Optimize kernel parameters
+echo "net.core.rmem_max = 134217728" >> /etc/sysctl.conf
+echo "net.core.wmem_max = 134217728" >> /etc/sysctl.conf
+sysctl -p
+```
+
+#### Bot Optimization
+```yaml
+# bot.yaml
+max_concurrent_ops: 20
+retry_attempts: 5
+retry_delay: "3s"
+health_check_interval: "15s"
+```
+
+---
+
+## Conclusion
+
+The GXR blockchain represents a new paradigm in immutable blockchain design, combining:
+
+- **Predictable Deflation**: Guaranteed supply reduction through mathematical precision
+- **Validator Accountability**: Automated enforcement of participation requirements
+- **Operational Excellence**: Comprehensive monitoring and alerting systems
+- **Immutable Guarantee**: No governance or upgrade mechanisms
+
+This specification provides the technical foundation for a truly immutable, deflationary blockchain ecosystem that operates with mathematical certainty and transparent accountability.
+
+---
+
+**Document Version**: 2.0.0  
+**Last Updated**: December 2024  
+**Next Review**: N/A (Immutable Specification)
 
