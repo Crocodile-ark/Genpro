@@ -1,40 +1,50 @@
 # Halving Module
 
-Modul halving mengatur distribusi reward 5 tahunan sesuai spesifikasi GXR blockchain.
+Modul halving mengatur sistem pengurangan total supply setiap 5 tahun sesuai spesifikasi GXR blockchain yang telah diperbarui.
 
 ## 🎯 Overview
 
-Sistem halving GXR berbeda dengan blockchain lain:
-- **Siklus**: 5 tahun per halving (bukan 4 tahun seperti Bitcoin)
-- **Pengurangan**: 15% per siklus (bukan 50%)
-- **Distribusi**: Bulanan selama 5 tahun (bukan sekaligus)
-- **Sumber**: Fixed pool 21.25M GXR (25% total supply)
+Sistem halving GXR yang baru bekerja dengan prinsip pengurangan total supply:
+- **Siklus**: 5 tahun per halving
+- **Pengurangan**: 15% dari total supply saat ini per siklus
+- **Distribusi**: Bulanan selama 5 tahun untuk setiap siklus
+- **Sumber**: Total supply blockchain yang terus berkurang
+- **Batas Minimum**: Halving berhenti otomatis jika total supply < 1.000 GXR
 
-## 📊 Halving Schedule
+## 📊 Cara Kerja Sistem Baru
 
-| Halving | Periode      | Dana GXR    | Pengurangan | Per Bulan |
-|---------|--------------|-------------|-------------|-----------|
-| 1       | Tahun 1–5    | 4,250,000   | —           | 70,833    |
-| 2       | Tahun 6–10   | 3,612,500   | -15%        | 60,208    |
-| 3       | Tahun 11–15  | 3,070,625   | -15%        | 51,177    |
-| 4       | Tahun 16–20  | 2,610,032   | -15%        | 43,500    |
-| 5       | Tahun 21–25  | 2,218,528   | -15%        | 36,975    |
+### Logika Pengurangan Supply:
+1. **Setiap 5 tahun**: Sistem menghitung 15% dari total supply saat ini
+2. **Distribusi bulanan**: 15% tersebut dibagi menjadi 60 distribusi bulanan
+3. **Burn & Mint**: Setiap bulan, sejumlah token di-burn dari supply, kemudian di-mint ulang untuk distribusi reward
+4. **Siklus berkelanjutan**: Setelah 5 tahun, sisa supply menjadi 100% baru untuk siklus berikutnya
+5. **Auto-stop**: Halving berhenti otomatis jika total supply < 1.000 GXR
 
-**Total**: 21,250,000 GXR akan terdistribusi selama 25 tahun.
+### Contoh Ilustrasi:
+- **Siklus 1**: Total supply 85,000,000 GXR
+  - 15% = 12,750,000 GXR akan terdistribusi dalam 5 tahun
+  - Per bulan: 212,500 GXR
+  - Setelah 5 tahun: Sisa supply = 72,250,000 GXR
+
+- **Siklus 2**: Total supply 72,250,000 GXR (menjadi 100% baru)
+  - 15% = 10,837,500 GXR akan terdistribusi dalam 5 tahun
+  - Per bulan: 180,625 GXR
+  - Setelah 5 tahun: Sisa supply = 61,412,500 GXR
+
+- **Dan seterusnya...**
 
 ## 💰 Distribusi Bulanan
 
-Setiap bulan, reward didistribusikan dengan pembagian:
+Setiap bulan, reward didistribusikan dengan pembagian yang sama:
 
 - **70%** → Validator aktif (dibagi rata)
 - **20%** → PoS Pool untuk delegator
 - **10%** → DEX Pool (GXR/TON, GXR/POLYGON)
 
-### Contoh Bulan Pertama:
-- Total reward: 70,833 GXR
-- Validator (70%): 49,583 GXR
-- Delegator (20%): 14,167 GXR  
-- DEX Pool (10%): 7,083 GXR
+### Proses Distribusi:
+1. **Burn**: Sejumlah token (reward bulanan) di-burn dari total supply
+2. **Mint**: Token baru di-mint untuk distribusi reward
+3. **Distribute**: Token reward didistribusikan sesuai persentase
 
 ## 🔧 Implementasi
 
@@ -53,110 +63,69 @@ type Params struct {
 
 ```go
 type HalvingInfo struct {
-    CurrentCycle       uint64   // Siklus saat ini (1-5)
+    CurrentCycle       uint64   // Siklus saat ini
     CycleStartTime     int64    // Waktu mulai siklus
-    TotalFundsForCycle sdk.Coin // Total dana siklus ini
-    DistributedInCycle sdk.Coin // Sudah terdistribusi
+    TotalFundsForCycle sdk.Coin // Total supply di awal siklus
+    DistributedInCycle sdk.Coin // Sudah terdistribusi dalam siklus ini
 }
 ```
 
-### Messages
-
-Modul halving tidak memiliki message dari user. Semua distribusi otomatis via BeginBlocker.
-
-### Queries
-
-```bash
-# Query parameters
-gxrchaind q halving params
-
-# Query halving info
-gxrchaind q halving halving-info
-
-# Query distribution history
-gxrchaind q halving distribution-history
-```
-
-## 🤖 Automasi
-
-### BeginBlocker
-
-Setiap blok, modul mengecek:
-1. Apakah sudah 30 hari sejak distribusi terakhir?
-2. Jika ya, lakukan distribusi bulanan
-3. Apakah sudah 5 tahun sejak siklus dimulai?
-4. Jika ya, maju ke siklus berikutnya
-
-### Bot Integration
-
-Validator bot memantau dan membantu:
-- Memastikan distribusi berjalan tepat waktu
-- Mengirim alert Telegram saat distribusi
-- Monitoring kesehatan halving fund
-
-## 📝 Events
+### Konstanta Penting
 
 ```go
-// Monthly distribution event
-EventTypeDistribution = "halving_distribution"
-AttributeKeyAmount    = "amount"
-AttributeKeyCycle     = "cycle"
-AttributeKeyMonth     = "month"
-
-// Cycle advancement event  
-EventTypeCycleAdvance = "halving_cycle_advance"
-AttributeKeyNewCycle  = "new_cycle"
-AttributeKeyNewFunds  = "new_funds"
+const (
+    MinimumSupplyThreshold = 1000 * 1e8 // 1,000 GXR minimum
+    HalvingReductionRate   = "0.15"     // 15% pengurangan
+    MainDenom             = "ugen"      // Denominasi utama
+)
 ```
 
-## 🚨 Error Handling
+## 🚀 Keunggulan Sistem Baru
 
-### Common Errors:
-- `ErrInvalidCycle`: Siklus halving tidak valid (harus 1-5)
-- `ErrInsufficientFunds`: Dana halving tidak mencukupi
-- `ErrDistributionTooEarly`: Belum waktunya distribusi bulanan
+1. **Deflasi Berkelanjutan**: Total supply terus berkurang setiap siklus
+2. **Adaptif**: Reward disesuaikan dengan supply saat ini
+3. **Sustainable**: Sistem berhenti otomatis di batas minimum
+4. **Transparent**: Semua perhitungan berdasarkan supply aktual
+5. **Fair**: Distribusi merata dalam periode 5 tahun
 
-### Recovery:
-- Jika distribusi gagal, akan dicoba ulang di blok berikutnya
-- Semua error dicatat dalam event log
-- Bot akan mengirim alert jika ada masalah
+## 📈 Monitoring
 
-## 🧪 Testing
-
+### Query Commands:
 ```bash
-# Unit tests
-go test ./x/halving/keeper/...
+# Cek total supply saat ini
+gxrchaind query bank total --denom ugen
 
-# Integration tests
-go test ./x/halving/...
+# Cek info halving
+gxrchaind query halving info
 
-# Simulation tests
-go test ./x/halving/simulation/...
+# Cek distribusi record
+gxrchaind query halving distributions
 ```
 
-### Test Scenarios:
-- ✅ Distribusi bulanan normal
-- ✅ Perpindahan siklus halving
-- ✅ Validasi parameter
-- ✅ Error handling
-- ✅ Genesis import/export
+### Log Events:
+- `Monthly rewards distributed`: Setiap distribusi bulanan
+- `Advanced to next halving cycle`: Perpindahan siklus
+- `Halving stopped: total supply below minimum threshold`: Auto-stop
 
-## 🔍 Monitoring
+## ⚠️ Catatan Penting
 
-### Metrics:
-- Total terdistribusi per siklus
-- Waktu distribusi terakhir
-- Sisa dana di halving fund
-- Jumlah validator aktif yang menerima reward
+1. **Irreversible**: Setiap burn bersifat permanen
+2. **Automatic**: Sistem berjalan otomatis tanpa intervensi manual
+3. **Predictable**: Semua perhitungan dapat diprediksi dari supply saat ini
+4. **Secure**: Menggunakan burn/mint mechanism yang aman
 
-### Alerts:
-- 🔔 Distribusi bulanan berhasil
-- ⚠️ Distribusi tertunda atau gagal
-- 🚨 Siklus halving berganti
-- 💰 Halving fund rendah
+## 🔍 Troubleshooting
 
-## 📚 References
+### Masalah Umum:
+- **Reward = 0**: Kemungkinan total supply sudah di bawah threshold
+- **Distribusi gagal**: Periksa validator aktif dan account module
+- **Siklus tidak maju**: Periksa parameter waktu dan block time
 
-- [GXR Specification](../../blockchain_gxr_spec.md)
-- [Cosmos SDK Modules](https://docs.cosmos.network/main/modules/)
-- [BeginBlocker/EndBlocker](https://docs.cosmos.network/main/building-modules/beginblock-endblock)
+### Solusi:
+```bash
+# Restart halving check
+gxrchaind tx halving check-cycle --from validator
+
+# Update parameters (jika diperlukan)
+gxrchaind tx gov submit-proposal param-change proposal.json
+```
