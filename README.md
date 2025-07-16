@@ -179,7 +179,7 @@ sudo systemctl status gxr
 
 ## 🔄 Sistem Halving
 
-### Siklus 5 Tahunan
+### Contoh Siklus 5 Tahunan
 
 | Halving | Periode      | Dana GXR    | Pengurangan | Bulanan |
 |---------|--------------|-------------|-------------|---------|
@@ -235,6 +235,7 @@ sudo systemctl status gxr
 
 ### LP Resmi:
 - `GXR/TON` - Pool utama
+- `GXR/ATOM` - Pool utama
 - `GXR/POLYGON` - Pool sekunder
 
 ### LP Komunitas:
