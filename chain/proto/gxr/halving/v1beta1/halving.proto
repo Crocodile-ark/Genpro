@@ -1,0 +1,63 @@
+syntax = "proto3";
+package gxr.halving.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "google/protobuf/duration.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/Crocodile-ark/gxrchaind/x/halving/types";
+
+// Params defines the parameters for the halving module.
+message Params {
+  // halving_cycle_duration defines the duration of each halving cycle (5 years)
+  google.protobuf.Duration halving_cycle_duration = 1
+      [(gogoproto.nullable) = false, (gogoproto.stdduration) = true];
+  
+  // validator_share defines the percentage of rewards going to validators (70%)
+  string validator_share = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  
+  // delegator_share defines the percentage of rewards going to delegators (20%)
+  string delegator_share = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  
+  // dex_share defines the percentage of rewards going to DEX pool (10%)
+  string dex_share = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// HalvingInfo stores information about the current halving cycle
+message HalvingInfo {
+  // current_cycle is the current halving cycle number (1, 2, 3, 4, 5)
+  uint64 current_cycle = 1;
+  
+  // cycle_start_time is when the current cycle started
+  int64 cycle_start_time = 2;
+  
+  // total_funds_for_cycle is the total amount allocated for this cycle
+  cosmos.base.v1beta1.Coin total_funds_for_cycle = 3 [(gogoproto.nullable) = false];
+  
+  // distributed_in_cycle is the amount already distributed in this cycle
+  cosmos.base.v1beta1.Coin distributed_in_cycle = 4 [(gogoproto.nullable) = false];
+}
+
+// DistributionRecord tracks monthly distributions
+message DistributionRecord {
+  // timestamp of the distribution
+  int64 timestamp = 1;
+  
+  // amount distributed
+  cosmos.base.v1beta1.Coin amount = 2 [(gogoproto.nullable) = false];
+  
+  // cycle number when this distribution occurred
+  uint64 cycle = 3;
+  
+  // month number within the cycle (1-60 for 5 years)
+  uint64 month = 4;
+}

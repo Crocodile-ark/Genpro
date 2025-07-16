@@ -1,0 +1,60 @@
+syntax = "proto3";
+package gxr.halving.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gxr/halving/v1beta1/halving.proto";
+
+option go_package = "github.com/Crocodile-ark/gxrchaind/x/halving/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Params queries all parameters of the halving module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/gxr/halving/v1beta1/params";
+  }
+
+  // HalvingInfo queries the current halving cycle information.
+  rpc HalvingInfo(QueryHalvingInfoRequest) returns (QueryHalvingInfoResponse) {
+    option (google.api.http).get = "/gxr/halving/v1beta1/halving_info";
+  }
+
+  // DistributionHistory queries the distribution history.
+  rpc DistributionHistory(QueryDistributionHistoryRequest) returns (QueryDistributionHistoryResponse) {
+    option (google.api.http).get = "/gxr/halving/v1beta1/distribution_history";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryHalvingInfoRequest is the request type for the Query/HalvingInfo RPC method.
+message QueryHalvingInfoRequest {}
+
+// QueryHalvingInfoResponse is the response type for the Query/HalvingInfo RPC method.
+message QueryHalvingInfoResponse {
+  // halving_info defines the current halving cycle information
+  HalvingInfo halving_info = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryDistributionHistoryRequest is the request type for the Query/DistributionHistory RPC method.
+message QueryDistributionHistoryRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryDistributionHistoryResponse is the response type for the Query/DistributionHistory RPC method.
+message QueryDistributionHistoryResponse {
+  // distribution_records defines the distribution history
+  repeated DistributionRecord distribution_records = 1 [(gogoproto.nullable) = false];
+  
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

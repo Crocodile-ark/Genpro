@@ -1,0 +1,75 @@
+syntax = "proto3";
+package gxr.feerouter.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+
+option go_package = "github.com/Crocodile-ark/gxrchaind/x/feerouter/types";
+
+// Params defines the parameters for the feerouter module.
+message Params {
+  // General transaction fee shares (40/30/30)
+  string general_validator_share = 1 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string general_dex_share = 2 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string general_pos_share = 3 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  
+  // LP community farming fee shares (30/25/25/20)
+  string farming_validator_share = 4 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string farming_dex_share = 5 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string farming_lp_reward_share = 6 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+  string farming_pos_share = 7 [
+    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec",
+    (gogoproto.nullable) = false
+  ];
+}
+
+// FeeStats tracks fee collection and distribution statistics
+message FeeStats {
+  // total fees collected
+  repeated cosmos.base.v1beta1.Coin total_collected = 1 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  
+  // total fees distributed to validators
+  repeated cosmos.base.v1beta1.Coin total_to_validators = 2 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  
+  // total fees distributed to dex pools
+  repeated cosmos.base.v1beta1.Coin total_to_dex = 3 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  
+  // total fees distributed to pos pools  
+  repeated cosmos.base.v1beta1.Coin total_to_pos = 4 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+  
+  // total fees distributed to LP rewards
+  repeated cosmos.base.v1beta1.Coin total_to_lp_rewards = 5 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+}
+
+// LPPool represents a liquidity pool that can receive farming rewards
+message LPPool {
+  // pool address
+  string address = 1;
+  
+  // pool name/identifier
+  string name = 2;
+  
+  // whether this pool is active for farming rewards
+  bool active = 3;
+  
+  // total rewards distributed to this pool
+  repeated cosmos.base.v1beta1.Coin total_rewards = 4 [(gogoproto.nullable) = false, (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"];
+}

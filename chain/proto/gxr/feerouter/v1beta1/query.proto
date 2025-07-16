@@ -1,0 +1,60 @@
+syntax = "proto3";
+package gxr.feerouter.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos/base/query/v1beta1/pagination.proto";
+import "gxr/feerouter/v1beta1/feerouter.proto";
+
+option go_package = "github.com/Crocodile-ark/gxrchaind/x/feerouter/types";
+
+// Query defines the gRPC querier service.
+service Query {
+  // Params queries all parameters of the feerouter module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (google.api.http).get = "/gxr/feerouter/v1beta1/params";
+  }
+
+  // FeeStats queries the fee collection and distribution statistics.
+  rpc FeeStats(QueryFeeStatsRequest) returns (QueryFeeStatsResponse) {
+    option (google.api.http).get = "/gxr/feerouter/v1beta1/fee_stats";
+  }
+
+  // LPPools queries all registered LP pools.
+  rpc LPPools(QueryLPPoolsRequest) returns (QueryLPPoolsResponse) {
+    option (google.api.http).get = "/gxr/feerouter/v1beta1/lp_pools";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryFeeStatsRequest is the request type for the Query/FeeStats RPC method.
+message QueryFeeStatsRequest {}
+
+// QueryFeeStatsResponse is the response type for the Query/FeeStats RPC method.
+message QueryFeeStatsResponse {
+  // fee_stats defines the fee collection statistics
+  FeeStats fee_stats = 1 [(gogoproto.nullable) = false];
+}
+
+// QueryLPPoolsRequest is the request type for the Query/LPPools RPC method.
+message QueryLPPoolsRequest {
+  // pagination defines an optional pagination for the request.
+  cosmos.base.query.v1beta1.PageRequest pagination = 1;
+}
+
+// QueryLPPoolsResponse is the response type for the Query/LPPools RPC method.
+message QueryLPPoolsResponse {
+  // lp_pools defines the registered LP pools
+  repeated LPPool lp_pools = 1 [(gogoproto.nullable) = false];
+  
+  // pagination defines the pagination in the response.
+  cosmos.base.query.v1beta1.PageResponse pagination = 2;
+}

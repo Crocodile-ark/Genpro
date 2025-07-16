@@ -1,0 +1,19 @@
+syntax = "proto3";
+package gxr.feerouter.v1beta1;
+
+import "gogoproto/gogo.proto";
+import "gxr/feerouter/v1beta1/feerouter.proto";
+
+option go_package = "github.com/Crocodile-ark/gxrchaind/x/feerouter/types";
+
+// GenesisState defines the feerouter module's genesis state.
+message GenesisState {
+  // params defines the parameters of the module.
+  Params params = 1 [(gogoproto.nullable) = false];
+  
+  // fee_stats defines the fee collection statistics
+  FeeStats fee_stats = 2 [(gogoproto.nullable) = false];
+  
+  // lp_pools defines the registered LP pools
+  repeated LPPool lp_pools = 3 [(gogoproto.nullable) = false];
+}
