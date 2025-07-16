@@ -18,7 +18,7 @@ GXR adalah blockchain Proof-of-Stake yang dirancang khusus untuk:
 ```
 gxrchaind/
 ├── chain/
-|     ├── app/                    # Aplikasi blockchain utama
+|     ├── app/                   # Aplikasi blockchain utama
 |     │   ├── app.go             # Konfigurasi aplikasi
 |     │   ├── encoding.go        # Encoding setup
 |     │   ├── genesis.go         # Genesis helpers
@@ -27,7 +27,7 @@ gxrchaind/
 |     │   └── cmd/
 |     │       ├── root.go        # Root command
 |     │       └── genaccounts.go # Genesis account command
-|     ├── proto/             # Protobuf definitions
+|     ├── proto/                 # Protobuf definitions
 |     |        └── gxr/
 |     |            ├── halving/
 |     |            └── feerouter/
@@ -39,15 +39,15 @@ gxrchaind/
 |                   ├── halving/
 |                   └── feerouter/
 |
-├── bot/                   # Bot validator (WAJIB)
-│   ├── main.go            # Bot utama
-│   ├── ibc_relayer.go     # IBC relayer otomatis
-│   ├── reward_distributor.go # Distribusi reward
-│   ├── dex_manager.go     # Auto refill DEX
-│   ├── rebalancer.go      # Auto rebalancing
-│   └── telegram_alert.go  # Alert Telegram
-└── launcher/              # Launcher untuk chain + bot
-    └── main.go            # Launcher utama
+├── bot/                         # Bot validator (WAJIB)
+│   ├── main.go                  # Bot utama
+│   ├── ibc_relayer.go           # IBC relayer otomatis
+│   ├── reward_distributor.go    # Distribusi reward
+│   ├── dex_manager.go           # Auto refill DEX
+│   ├── rebalancer.go            # Auto rebalancing
+│   └── telegram_alert.go        # Alert Telegram
+└── launcher/                    # Launcher untuk chain + bot
+    └── main.go                  # Launcher utama
 
 ```
 
