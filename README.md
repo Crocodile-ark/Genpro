@@ -1,283 +1,401 @@
-# GXR (Gen X Raider) Blockchain
+# GXR Blockchain - Enhanced Immutable Deflationary System
 
-> ✅ **Blockchain anti-inflasi berbasis PoS dengan sistem halving dinamis**
-> 
-> Blockchain Cosmos SDK yang dirancang untuk efisiensi, distribusi adil, dan desentralisasi otomatis dengan sistem halving yang mengurangi total supply secara bertahap.
+## Overview
 
----
+GXR is an immutable blockchain built on Cosmos SDK with a revolutionary deflationary halving mechanism. The system features actual supply reduction through a burn-and-mint process, strict validator requirements, and comprehensive bot infrastructure.
 
-## 🌟 Fitur Utama
+## Key Features
 
-### 🔥 Sistem Halving Revolusioner
-- **Pengurangan Supply**: Setiap 5 tahun, total supply berkurang 15%
-- **Distribusi Bulanan**: Reward terdistribusi merata selama 5 tahun per siklus
-- **Auto-Stop**: Halving berhenti otomatis jika total supply < 1.000 GXR
-- **Deflasi Berkelanjutan**: Supply terus berkurang, menciptakan scarcity alami
+### 🔥 Revolutionary Halving System
+- **15% Supply Reduction**: Every 5 years, 15% of total supply is allocated to HalvingFund
+- **Actual Deflation**: Monthly burn-and-mint process reduces total supply permanently
+- **Distribution Period**: 2 years distribution followed by 3 years pause
+- **DEX Rewards**: Only years 1-2 of each distribution period
+- **Auto-Stop**: Halving stops when supply < 1,000 GXR
 
-### 🤖 Bot Validator Otomatis
-- **IBC Relayer**: Sinkronisasi otomatis antar-chain
-- **Auto Rebalancing**: Rebalancing harga otomatis antar pool
-- **Reward Distribution**: Distribusi reward bulanan otomatis
-- **Telegram Alerts**: Monitoring real-time via Telegram
+### 👥 Validator Requirements
+- **Inactivity Penalty**: >10 days inactive per month = reward forfeiture
+- **Mandatory Bot**: Validators must run bot or face slashing
+- **Uptime Tracking**: Comprehensive monitoring and alerts
+- **Reward Eligibility**: Active validators only receive halving rewards
 
-### 💎 Tokenomics Anti-Inflasi
-- **Total Supply**: 85,000,000 GXR (fixed, tidak bertambah)
-- **Konsensus**: Proof-of-Stake (PoS) dengan 85 validator maksimal
-- **IBC Support**: Koneksi cross-chain ke TON, Polygon, dan lainnya
-- **No Smart Contract**: Sederhana, ringan, aman
+### 🤖 Enhanced Bot System
+- **Hourly Rebalancing**: Exactly 1-hour intervals, not per block
+- **Price Monitoring**: Monitor-only mode when GXR ≥ $5 for 24 hours
+- **Telegram Alerts**: Real-time notifications for all state changes
+- **Health Monitoring**: Comprehensive component health checks
+- **Validator Tracking**: Heartbeat monitoring and inactivity detection
 
----
+### 🏛️ Immutable Architecture
+- **No Governance**: No parameter changes or upgrades
+- **No Smart Contracts**: Pure blockchain functionality
+- **No NFTs**: Single token ecosystem
+- **One Token**: Only GXR exists
 
-## 📊 Sistem Halving Terbaru
+## Quick Start
 
-### Cara Kerja:
-1. **Setiap 5 tahun**: Sistem menghitung 15% dari total supply saat ini
-2. **Distribusi bulanan**: 15% tersebut dibagi menjadi 60 distribusi bulanan
-3. **Burn & Mint**: Monthly reward di-burn dari supply, kemudian di-mint untuk distribusi
-4. **Siklus berkelanjutan**: Setelah 5 tahun, sisa supply menjadi 100% baru untuk siklus berikutnya
+### Prerequisites
+- Go 1.21+
+- Cosmos SDK
+- Node.js (for launcher)
 
-### Contoh Proyeksi:
-```
-Siklus 1: 85,000,000 GXR → 72,250,000 GXR (15% terdistribusi)
-Siklus 2: 72,250,000 GXR → 61,412,500 GXR (15% terdistribusi)
-Siklus 3: 61,412,500 GXR → 52,200,625 GXR (15% terdistribusi)
-...dan seterusnya hingga supply < 1,000 GXR
-```
+### Installation
 
-### Distribusi Reward:
-- **70%** → Validator aktif (dibagi rata)
-- **20%** → PoS Pool untuk delegator
-- **10%** → DEX Pool (likuiditas GXR/TON, GXR/POLYGON)
-
----
-
-## 🚀 Quick Start
-
-### 1. Setup Node
 ```bash
 # Clone repository
-git clone https://github.com/your-org/gxr-blockchain.git
-cd gxr-blockchain
+git clone https://github.com/your-org/gxr-chain
+cd gxr-chain
 
 # Build chain
-cd chain/
+cd chain
 make build
 
-# Initialize node
-./build/gxrchaind init your-node-name --chain-id gxr-1
+# Build bot
+cd ../bot
+go build -o gxr-bot
 
-# Start node
+# Build launcher
+cd ../launcher
+npm install
+npm run build
+```
+
+### Running the Chain
+
+```bash
+# Initialize chain
+./build/gxrchaind init mynode --chain-id gxr-1
+
+# Start chain
 ./build/gxrchaind start
 ```
 
-### 2. Setup Bot Validator
-```bash
-# Build bot
-cd bot/
-go build -o gxr-bot
+### Running the Bot
 
-# Create config file
-cat > config/bot.yaml << EOF
-chain_rpc: "tcp://localhost:26657"
-chain_grpc: "localhost:9090"
-chain_id: "gxr-1"
-telegram_token: "YOUR_TELEGRAM_BOT_TOKEN"
-telegram_chat_id: "YOUR_CHAT_ID"
-ibc_enabled: true
-ibc_channels: ["channel-0", "channel-1"]
-EOF
+```bash
+# Create bot configuration
+cp config/bot.example.yaml config/bot.yaml
+
+# Edit configuration
+nano config/bot.yaml
 
 # Start bot
 ./gxr-bot --config config/bot.yaml
 ```
 
-### 3. Setup Validator
+## Architecture
+
+### Chain Structure
+```
+chain/
+├── x/halving/          # Halving module
+│   ├── keeper/         # Core halving logic
+│   ├── types/          # Data structures
+│   └── client/         # CLI commands
+├── app/                # Application setup
+├── cmd/                # Chain binary
+└── proto/              # Protocol buffers
+```
+
+### Bot Structure
+```
+bot/
+├── main.go             # Main bot service
+├── rebalancer.go       # Hourly rebalancing
+├── validator_monitor.go # Validator tracking
+├── telegram_alert.go   # Alert system
+├── dex_manager.go      # DEX integration
+├── ibc_relayer.go      # IBC operations
+└── reward_distributor.go # Reward distribution
+```
+
+## Halving System Details
+
+### Timeline
+- **Cycle Duration**: 5 years
+- **Distribution**: 2 years active
+- **Pause**: 3 years inactive
+- **Monthly Distribution**: 30-day intervals
+
+### Distribution Formula
+```
+Monthly Burn = (Total Supply × 0.15) ÷ 24 months
+```
+
+### Reward Allocation
+- **70%**: Active validators
+- **20%**: Delegators (PoS staking)
+- **10%**: DEX pools (years 1-2 only)
+
+### Example Scenario
+```
+Initial Supply: 1,000,000 GXR
+Cycle 1: 850,000 GXR (15% burned)
+Cycle 2: 722,500 GXR (15% burned)
+Cycle 3: 614,125 GXR (15% burned)
+...continues until < 1,000 GXR
+```
+
+## Validator Requirements
+
+### Activity Rules
+- **Monthly Uptime**: >20 days active required
+- **Inactivity Penalty**: >10 days inactive = no rewards
+- **Status Tracking**: Real-time monitoring
+- **Reward Forfeiture**: Inactive validators lose monthly rewards
+
+### Bot Requirements
+- **Mandatory**: All validators must run bot
+- **Heartbeat**: 1-minute intervals
+- **Slashing**: No bot = validator slashing
+- **Monitoring**: Comprehensive health checks
+
+## Bot Configuration
+
+### Example Configuration
+```yaml
+# Chain connection
+chain_rpc: "tcp://localhost:26657"
+chain_grpc: "localhost:9090"
+chain_id: "gxr-1"
+
+# Validator settings
+validator_address: "gxrvaloper1..."
+validator_name: "MyValidator"
+
+# Rebalancing (1-hour intervals)
+swap_cooldown: "1h"
+price_limit: "5.0"
+max_swap_daily: "10000"
+
+# Telegram alerts
+telegram_enabled: true
+telegram_token: "YOUR_BOT_TOKEN"
+telegram_chat_id: "YOUR_CHAT_ID"
+
+# Enhanced monitoring
+monitoring_enabled: true
+health_check_enabled: true
+```
+
+## Bot Operations
+
+### Rebalancing Rules
+- **Frequency**: Exactly every 1 hour
+- **Price Threshold**: $5.00 USD
+- **Monitor Mode**: 24-hour suspension when price ≥ $5
+- **State Alerts**: All state changes via Telegram
+
+### Alert Categories
+- **Info**: General notifications
+- **Warning**: Price thresholds, inactivity
+- **Error**: Component failures
+- **Critical**: Emergency situations
+- **Success**: Successful operations
+
+### Rate Limiting
+- **Max Alerts**: 10 per minute
+- **Queue Size**: 100 pending alerts
+- **Retry Logic**: 3 attempts with 5s delay
+
+## Monitoring & Alerts
+
+### Health Checks
+- **Rebalancer**: State monitoring
+- **Validator Monitor**: Uptime tracking
+- **IBC Relayer**: Connection status
+- **DEX Manager**: Pool health
+- **Reward Distributor**: Distribution status
+
+### Telegram Integration
 ```bash
-# Create validator
-gxrchaind tx staking create-validator \
-  --amount=1000000ugen \
-  --pubkey=$(gxrchaind tendermint show-validator) \
-  --moniker="your-validator" \
-  --chain-id=gxr-1 \
-  --commission-rate="0.05" \
-  --from=your-wallet
+# Test connection
+./gxr-bot test-telegram
 
-# Start validator bot (wajib untuk validator)
-./gxr-bot --config config/validator.yaml
+# Send test alert
+./gxr-bot send-alert "Test message"
 ```
 
----
+### Dashboard Metrics
+- Active validators
+- Current halving cycle
+- Supply statistics
+- Bot health status
+- Alert history
 
-## 🔧 Struktur Proyek
+## Command Line Interface
 
-```
-gxr-blockchain/
-├── chain/                    # Blockchain core
-│   ├── x/halving/           # Halving module (sistem utama)
-│   ├── x/bank/              # Bank module
-│   ├── x/staking/           # Staking module
-│   ├── app/                 # Application setup
-│   └── cmd/                 # CLI commands
-├── bot/                     # Validator bot
-│   ├── main.go             # Bot utama
-│   ├── reward_distributor.go # Distribusi reward
-│   ├── rebalancer.go       # Rebalancing otomatis
-│   ├── ibc_relayer.go      # IBC relaying
-│   └── telegram_alert.go   # Telegram alerts
-├── launcher/               # Node launcher
-└── docs/                   # Dokumentasi
-```
-
----
-
-## 📈 Monitoring & Status
-
-### Query Commands:
+### Chain Commands
 ```bash
-# Cek total supply saat ini
-gxrchaind query bank total --denom ugen
-
-# Cek info halving
+# Query halving info
 gxrchaind query halving info
 
-# Cek status validator
-gxrchaind query staking validators
+# Query validator uptime
+gxrchaind query halving uptime [validator]
 
-# Cek distribusi history
+# Query distribution records
 gxrchaind query halving distributions
 ```
 
-### Bot Status:
+### Bot Commands
 ```bash
-# Cek status bot
-curl http://localhost:8080/status
+# Start bot
+./gxr-bot --config config/bot.yaml
 
-# Cek status IBC
-curl http://localhost:8080/ibc/status
+# Check status
+./gxr-bot status
 
-# Cek status rebalancer
-curl http://localhost:8080/rebalancer/status
+# Test configuration
+./gxr-bot test
+
+# Show version
+./gxr-bot version
 ```
 
----
+## Security Features
 
-## 🔐 Keamanan & Compliance
+### Immutability
+- **No Governance**: Parameters cannot be changed
+- **No Upgrades**: Chain version is fixed
+- **No Smart Contracts**: Code cannot be modified
+- **Deterministic**: All operations are predictable
 
-### Fitur Keamanan:
-- **Immutable Genesis**: Parameter dikunci dari awal
-- **No Governance**: Tidak ada voting yang bisa mengubah aturan
-- **Anti-Manipulation**: Bot protection untuk extreme price movements
-- **Rate Limiting**: Telegram alerts dengan rate limiting
-- **Auto Recovery**: Automatic reconnection pada network issues
+### Validator Security
+- **Slashing**: Non-compliant validators are penalized
+- **Monitoring**: Real-time tracking of all validators
+- **Mandatory Bots**: Required for participation
+- **Transparent**: All actions are publicly auditable
 
-### Compliance:
-- **Audit Trail**: Semua transaksi tercatat on-chain
-- **Transparent**: Open source dan dapat diverifikasi
-- **Predictable**: Semua perhitungan deterministik
-- **Decentralized**: Tidak ada central authority
+## Network Statistics
 
----
+### Current Metrics
+- **Total Supply**: Dynamic (decreasing)
+- **Validator Count**: Active participants
+- **Halving Cycle**: Current cycle number
+- **Next Distribution**: Countdown timer
+- **Bot Health**: System status
 
-## 🛠️ Development
+### Historical Data
+- Supply reduction history
+- Validator performance
+- Distribution records
+- Alert history
 
-### Build Requirements:
-- Go 1.21+
-- Make
-- Git
+## Troubleshooting
 
-### Development Setup:
+### Common Issues
+
+#### Bot Not Starting
 ```bash
-# Clone dan setup
-git clone https://github.com/your-org/gxr-blockchain.git
-cd gxr-blockchain
+# Check configuration
+./gxr-bot test
 
-# Install dependencies
-cd chain && go mod tidy
-cd ../bot && go mod tidy
+# Verify chain connection
+./gxr-bot status
+
+# Check logs
+tail -f logs/gxr-bot.log
+```
+
+#### Validator Inactivity
+```bash
+# Check validator status
+gxrchaind query staking validator [validator-address]
+
+# Check uptime record
+gxrchaind query halving uptime [validator-address]
+
+# Restart validator
+systemctl restart gxrchaind
+```
+
+#### Telegram Alerts Not Working
+```bash
+# Test connection
+./gxr-bot test-telegram
+
+# Check configuration
+grep -A 3 telegram config/bot.yaml
+
+# Verify token and chat ID
+curl -s "https://api.telegram.org/bot$TOKEN/getMe"
+```
+
+### Performance Optimization
+
+#### Bot Performance
+- **Concurrent Operations**: Configure max_concurrent_ops
+- **Retry Logic**: Adjust retry_attempts and retry_delay
+- **Health Checks**: Optimize health_check_interval
+- **Alert Rate**: Configure telegram rate limiting
+
+#### Chain Performance
+- **Pruning**: Configure state pruning
+- **Indexing**: Optimize transaction indexing
+- **Caching**: Enable state caching
+- **Logging**: Adjust log levels
+
+## Development
+
+### Building from Source
+```bash
+# Build chain
+cd chain
+make build
+
+# Build bot
+cd bot
+go build -o gxr-bot
 
 # Run tests
 make test
-
-# Run linter
-make lint
 ```
 
-### Testing:
+### Running Tests
 ```bash
 # Unit tests
-make test-unit
+go test ./...
 
 # Integration tests
 make test-integration
 
-# E2E tests
+# End-to-end tests
 make test-e2e
-
-# Coverage
-make coverage
 ```
 
----
+## API Reference
 
-## 🤝 Contributing
+### Chain API
+- **REST**: http://localhost:1317
+- **gRPC**: localhost:9090
+- **WebSocket**: ws://localhost:26657/websocket
 
-1. Fork repository
-2. Create feature branch: `git checkout -b feature/new-feature`
-3. Commit changes: `git commit -m 'Add new feature'`
-4. Push branch: `git push origin feature/new-feature`
-5. Create Pull Request
+### Bot API
+- **Health**: GET /health
+- **Status**: GET /status
+- **Metrics**: GET /metrics
 
-### Code Style:
-- Follow Go conventions
-- Add tests for new features
-- Update documentation
-- Run linter before commit
+## Support
 
----
+### Documentation
+- **Technical Specs**: See `docs/blockchain_gxr_spec.md`
+- **Bot Guide**: See `bot/README.md`
+- **API Docs**: See `docs/api.md`
 
-## 📞 Support
+### Community
+- **Discord**: [GXR Community](https://discord.gg/gxr)
+- **Telegram**: [GXR Announcements](https://t.me/gxr_announcements)
+- **GitHub**: [Issues & PRs](https://github.com/your-org/gxr-chain/issues)
 
-### Telegram:
-- **Official Group**: [t.me/gxr_blockchain](https://t.me/gxr_blockchain)
-- **Developer Chat**: [t.me/gxr_devs](https://t.me/gxr_devs)
-- **Validator Support**: [t.me/gxr_validators](https://t.me/gxr_validators)
+## License
 
-### Resources:
-- **Documentation**: [docs.gxr.blockchain](https://docs.gxr.blockchain)
-- **Explorer**: [explorer.gxr.blockchain](https://explorer.gxr.blockchain)
-- **API Reference**: [api.gxr.blockchain](https://api.gxr.blockchain)
+MIT License - see LICENSE file for details.
 
----
+## Disclaimer
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file for details.
+This is an immutable blockchain system. Once deployed, the parameters cannot be changed through governance or upgrades. Validators and users should fully understand the system before participating.
 
 ---
 
-## 🎯 Roadmap
-
-### Phase 1: Foundation ✅
-- [x] Core blockchain dengan halving module
-- [x] Bot validator otomatis
-- [x] IBC integration
-- [x] Telegram monitoring
-
-### Phase 2: Expansion 🚧
-- [ ] DEX integration (GXR/TON, GXR/POLYGON)
-- [ ] Web dashboard untuk monitoring
-- [ ] Mobile app untuk delegators
-- [ ] Advanced analytics
-
-### Phase 3: Ecosystem 🔮
-- [ ] Cross-chain bridges
-- [ ] DeFi protocols integration
-- [ ] NFT marketplace
-- [ ] Gaming integrations
-
----
-
-**⚡ GXR: The Future of Deflationary Blockchain**
-
-*Dirancang untuk masa depan, dibangun untuk bertahan.*
+**GXR Blockchain** - Truly Immutable, Deflationary, and Decentralized
 
