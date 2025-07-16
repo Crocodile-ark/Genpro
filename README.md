@@ -29,7 +29,12 @@ gxrchaind/
 |     │       └── genaccounts.go # Genesis account command
 |     └── x/                     # Modul kustom
 |         ├── halving/           # Modul distribusi reward 5 tahunan
-|         └── feerouter/         # Modul routing fee otomatis
+|         ├── feerouter/         # Modul routing fee otomatis
+|         └── proto/             # Protobuf definitions
+|              └── gxr/
+|                   ├── halving/
+|                   └── feerouter/
+|
 ├── bot/                   # Bot validator (WAJIB)
 │   ├── main.go            # Bot utama
 │   ├── ibc_relayer.go     # IBC relayer otomatis
@@ -38,11 +43,8 @@ gxrchaind/
 │   ├── rebalancer.go      # Auto rebalancing
 │   └── telegram_alert.go  # Alert Telegram
 ├── launcher/              # Launcher untuk chain + bot
-│   └── main.go            # Launcher utama
-└── proto/                 # Protobuf definitions
-    └── gxr/
-        ├── halving/
-        └── feerouter/
+    └── main.go            # Launcher utama
+
 ```
 
 ## 🔧 Build & Installation
