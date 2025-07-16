@@ -27,6 +27,10 @@ gxrchaind/
 |     │   └── cmd/
 |     │       ├── root.go        # Root command
 |     │       └── genaccounts.go # Genesis account command
+|     ├── proto/             # Protobuf definitions
+|     |        └── gxr/
+|     |            ├── halving/
+|     |            └── feerouter/
 |     └── x/                     # Modul kustom
 |         ├── halving/           # Modul distribusi reward 5 tahunan
 |         ├── feerouter/         # Modul routing fee otomatis
@@ -42,7 +46,7 @@ gxrchaind/
 │   ├── dex_manager.go     # Auto refill DEX
 │   ├── rebalancer.go      # Auto rebalancing
 │   └── telegram_alert.go  # Alert Telegram
-├── launcher/              # Launcher untuk chain + bot
+└── launcher/              # Launcher untuk chain + bot
     └── main.go            # Launcher utama
 
 ```
