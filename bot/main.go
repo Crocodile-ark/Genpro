@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/spf13/cobra"
+	"gopkg.in/yaml.v2"
 )
 
 const (
@@ -20,6 +21,12 @@ const (
 	// Bot configuration
 	DefaultConfigPath = "./config/bot.yaml"
 	DefaultLogLevel   = "info"
+	
+	// Default values
+	DefaultCheckInterval = 5 * time.Minute
+	DefaultSwapCooldown  = 30 * time.Minute
+	DefaultPriceLimit    = "10.0"
+	DefaultMaxSwapDaily  = "10000"
 )
 
 // BotConfig represents the bot configuration
@@ -50,6 +57,54 @@ type BotConfig struct {
 	EmergencyMode bool `yaml:"emergency_mode"`
 }
 
+// DefaultConfig returns a default configuration
+func DefaultConfig() *BotConfig {
+	return &BotConfig{
+		ChainRPC:      "tcp://localhost:26657",
+		ChainGRPC:     "localhost:9090",
+		ChainID:       "gxr-1",
+		LogLevel:      DefaultLogLevel,
+		CheckInterval: DefaultCheckInterval,
+		IBCEnabled:    false,
+		IBCChannels:   []string{},
+		MaxSwapDaily:  DefaultMaxSwapDaily,
+		SwapCooldown:  DefaultSwapCooldown,
+		PriceLimit:    DefaultPriceLimit,
+		EmergencyMode: false,
+	}
+}
+
+// Validate validates the bot configuration
+func (c *BotConfig) Validate() error {
+	if c.ChainRPC == "" {
+		return fmt.Errorf("chain_rpc is required")
+	}
+	if c.ChainGRPC == "" {
+		return fmt.Errorf("chain_grpc is required")
+	}
+	if c.ChainID == "" {
+		return fmt.Errorf("chain_id is required")
+	}
+	if c.CheckInterval <= 0 {
+		return fmt.Errorf("check_interval must be positive")
+	}
+	if c.SwapCooldown <= 0 {
+		return fmt.Errorf("swap_cooldown must be positive")
+	}
+	
+	// Validate IBC settings if enabled
+	if c.IBCEnabled && len(c.IBCChannels) == 0 {
+		return fmt.Errorf("ibc_channels must be specified when IBC is enabled")
+	}
+	
+	// Validate Telegram settings if provided
+	if c.TelegramToken != "" && c.TelegramChatID == "" {
+		return fmt.Errorf("telegram_chat_id is required when telegram_token is provided")
+	}
+	
+	return nil
+}
+
 // GXRBot represents the main bot instance
 type GXRBot struct {
 	config   *BotConfig
@@ -66,7 +121,11 @@ type GXRBot struct {
 }
 
 // NewGXRBot creates a new bot instance
-func NewGXRBot(config *BotConfig) *GXRBot {
+func NewGXRBot(config *BotConfig) (*GXRBot, error) {
+	if err := config.Validate(); err != nil {
+		return nil, fmt.Errorf("invalid configuration: %w", err)
+	}
+	
 	ctx, cancel := context.WithCancel(context.Background())
 	
 	return &GXRBot{
@@ -74,12 +133,23 @@ func NewGXRBot(config *BotConfig) *GXRBot {
 		ctx:    ctx,
 		cancel: cancel,
 		wg:     &sync.WaitGroup{},
-	}
+	}, nil
 }
 
 // Initialize initializes all bot components
 func (b *GXRBot) Initialize() error {
 	log.Printf("Initializing GXR Bot v%s", Version)
+	
+	// Initialize Telegram Alert first (so other components can use it)
+	if b.config.TelegramToken != "" {
+		b.telegramAlert = NewTelegramAlert(b.config)
+		if err := b.telegramAlert.Initialize(); err != nil {
+			log.Printf("Warning: Failed to initialize Telegram alerts: %v", err)
+			b.telegramAlert = nil // Disable if initialization fails
+		} else {
+			log.Println("✅ Telegram Alert initialized")
+		}
+	}
 	
 	// Initialize IBC Relayer
 	if b.config.IBCEnabled {
@@ -111,17 +181,7 @@ func (b *GXRBot) Initialize() error {
 	}
 	log.Println("✅ Rebalancer initialized")
 	
-	// Initialize Telegram Alert
-	if b.config.TelegramToken != "" {
-		b.telegramAlert = NewTelegramAlert(b.config)
-		if err := b.telegramAlert.Initialize(); err != nil {
-			log.Printf("⚠️  Telegram alerts disabled: %v", err)
-		} else {
-			log.Println("✅ Telegram Alert initialized")
-		}
-	}
-	
-	log.Println("🚀 GXR Bot initialization complete")
+	log.Println("🚀 All bot components initialized successfully")
 	return nil
 }
 
@@ -167,73 +227,110 @@ func (b *GXRBot) Start() error {
 		}
 	}()
 	
-	// Send startup notification
+	// Send startup alert
 	if b.telegramAlert != nil {
-		b.telegramAlert.SendAlert("🚀 GXR Bot started successfully")
+		b.telegramAlert.SendAlert("🚀 GXR Bot started successfully\n\nAll services are now running.")
 	}
 	
-	log.Println("✅ All GXR Bot services started")
+	log.Println("🎉 All GXR Bot services started successfully")
 	return nil
 }
 
 // Stop gracefully stops all bot services
 func (b *GXRBot) Stop() {
-	log.Println("Stopping GXR Bot services...")
+	log.Println("Stopping GXR Bot...")
 	
-	// Cancel context to signal all goroutines to stop
+	// Send shutdown alert
+	if b.telegramAlert != nil {
+		b.telegramAlert.SendAlert("🛑 GXR Bot shutting down\n\nAll services will be stopped.")
+	}
+	
+	// Cancel context to stop all goroutines
 	b.cancel()
 	
 	// Wait for all goroutines to finish
 	b.wg.Wait()
 	
-	// Send shutdown notification
-	if b.telegramAlert != nil {
-		b.telegramAlert.SendAlert("🛑 GXR Bot stopped")
+	log.Println("👋 GXR Bot stopped successfully")
+}
+
+// GetStatus returns the status of all bot components
+func (b *GXRBot) GetStatus() map[string]interface{} {
+	status := map[string]interface{}{
+		"version": Version,
+		"config":  b.config,
 	}
 	
-	log.Println("✅ GXR Bot stopped gracefully")
-}
-
-// DefaultConfig returns the default bot configuration
-func DefaultConfig() *BotConfig {
-	return &BotConfig{
-		ChainRPC:      "tcp://localhost:26657",
-		ChainGRPC:     "localhost:9090",
-		ChainID:       "gxr-1",
-		LogLevel:      DefaultLogLevel,
-		CheckInterval: 30 * time.Second,
-		IBCEnabled:    true,
-		IBCChannels:   []string{"channel-0", "channel-1"},
-		MaxSwapDaily:  "10000ugen", // 10,000 GXR daily limit
-		SwapCooldown:  30 * time.Minute,
-		PriceLimit:    "10000000", // $10 limit for emergency mode
-		EmergencyMode: false,
+	if b.ibcRelayer != nil {
+		status["ibc_relayer"] = b.ibcRelayer.GetStatus()
 	}
+	
+	if b.rewardDistributor != nil {
+		status["reward_distributor"] = b.rewardDistributor.GetStatus()
+	}
+	
+	if b.dexManager != nil {
+		status["dex_manager"] = b.dexManager.GetStatus()
+	}
+	
+	if b.rebalancer != nil {
+		status["rebalancer"] = b.rebalancer.GetStatus()
+	}
+	
+	if b.telegramAlert != nil {
+		status["telegram_alert"] = b.telegramAlert.GetStatus()
+	}
+	
+	return status
 }
 
-// Main CLI command
+// loadConfig loads configuration from file
+func loadConfig(path string) (*BotConfig, error) {
+	if path == "" {
+		path = DefaultConfigPath
+	}
+	
+	// Check if file exists
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		log.Printf("Config file not found at %s, using defaults", path)
+		return DefaultConfig(), nil
+	}
+	
+	data, err := os.ReadFile(path)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read config file: %w", err)
+	}
+	
+	config := DefaultConfig()
+	if err := yaml.Unmarshal(data, config); err != nil {
+		return nil, fmt.Errorf("failed to parse config file: %w", err)
+	}
+	
+	return config, nil
+}
+
+// main function and CLI setup
 func main() {
 	var configPath string
 	
 	rootCmd := &cobra.Command{
 		Use:   "gxr-bot",
-		Short: "GXR Validator Bot",
-		Long: `GXR Validator Bot provides automated services for GXR blockchain:
-- IBC Relayer for cross-chain synchronization
-- Reward Distribution automation
-- DEX Pool auto-refill and rebalancing
-- Telegram alerts for monitoring`,
-		Version: Version,
+		Short: "GXR Blockchain Validator Bot",
+		Long:  `GXR Bot handles automatic IBC relaying, reward distribution, DEX management, and rebalancing for GXR blockchain validators.`,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// Load configuration
-			config := DefaultConfig()
-			if configPath != "" {
-				// TODO: Load from file
-				log.Printf("Loading config from: %s", configPath)
+			config, err := loadConfig(configPath)
+			if err != nil {
+				return fmt.Errorf("failed to load configuration: %w", err)
 			}
 			
-			// Create and initialize bot
-			bot := NewGXRBot(config)
+			// Create bot instance
+			bot, err := NewGXRBot(config)
+			if err != nil {
+				return fmt.Errorf("failed to create bot: %w", err)
+			}
+			
+			// Initialize bot
 			if err := bot.Initialize(); err != nil {
 				return fmt.Errorf("failed to initialize bot: %w", err)
 			}
@@ -243,15 +340,17 @@ func main() {
 				return fmt.Errorf("failed to start bot: %w", err)
 			}
 			
-			// Wait for interrupt signal
-			sigChan := make(chan os.Signal, 1)
-			signal.Notify(sigChan, syscall.SIGINT, syscall.SIGTERM)
+			// Set up signal handling for graceful shutdown
+			c := make(chan os.Signal, 1)
+			signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 			
-			log.Println("GXR Bot is running. Press Ctrl+C to stop.")
-			<-sigChan
+			// Wait for shutdown signal
+			<-c
+			log.Println("Received shutdown signal")
 			
-			// Graceful shutdown
+			// Gracefully stop the bot
 			bot.Stop()
+			
 			return nil
 		},
 	}
