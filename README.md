@@ -17,18 +17,19 @@ GXR adalah blockchain Proof-of-Stake yang dirancang khusus untuk:
 
 ```
 gxrchaind/
-├── app/                    # Aplikasi blockchain utama
-│   ├── app.go             # Konfigurasi aplikasi
-│   ├── encoding.go        # Encoding setup
-│   ├── genesis.go         # Genesis helpers
-│   └── gxr_genesis.go     # Alokasi supply GXR
-├── cmd/gxrchaind/         # CLI daemon
-│   └── cmd/
-│       ├── root.go        # Root command
-│       └── genaccounts.go # Genesis account command
-├── x/                     # Modul kustom
-│   ├── halving/           # Modul distribusi reward 5 tahunan
-│   └── feerouter/         # Modul routing fee otomatis
+├── chain/
+|     ├── app/                    # Aplikasi blockchain utama
+|     │   ├── app.go             # Konfigurasi aplikasi
+|     │   ├── encoding.go        # Encoding setup
+|     │   ├── genesis.go         # Genesis helpers
+|     │   └── gxr_genesis.go     # Alokasi supply GXR
+|     ├── cmd/gxrchaind/         # CLI daemon
+|     │   └── cmd/
+|     │       ├── root.go        # Root command
+|     │       └── genaccounts.go # Genesis account command
+|     └── x/                     # Modul kustom
+|         ├── halving/           # Modul distribusi reward 5 tahunan
+|         └── feerouter/         # Modul routing fee otomatis
 ├── bot/                   # Bot validator (WAJIB)
 │   ├── main.go            # Bot utama
 │   ├── ibc_relayer.go     # IBC relayer otomatis
