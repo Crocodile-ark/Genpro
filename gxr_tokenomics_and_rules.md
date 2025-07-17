@@ -16,7 +16,7 @@
 | **Decimals**         | 8                                          |
 | **Smart Contracts**  | Not used                                  |
 | **Consensus**        | Proof-of-Stake (PoS)                       |
-| **IBC Support**      | Active (GXR/TON, GXR/POLYGON, etc.)       |
+| **IBC Support**      | Active (GXR/TON, GXR/ATOM, etc.)       |
 | **Max Validators**   | 85 nodes                                   |
 | **Block Time**       | 15 seconds per block                      |
 
@@ -31,7 +31,7 @@
 | Airdrop & Farming              | 17,000,000    | 20.00%     | Initial distribution via Telegram bot farming                                     |
 | Developer                     | 8,500,000     | 10.00%     | 5-year hard vesting, 10% unlocked every 6 months                                 |
 | Core Team (2 members)         | 3,400,000     | 4.00%      | 2% / 2%, 3-year soft vesting                                                      |
-| LP & Market                   | 8,500,000     | 10.00%     | Initial liquidity (GXR/TON, GXR/POLYGON, etc.)                                   |
+| LP & Market                   | 8,500,000     | 10.00%     | Initial liquidity (GXR/TON, GXR/ATOM, etc.)                                   |
 | Grants (5–10 parties)         | 8,500,000     | 10.00%     | Project and partner collaboration grants                                          |
 | Staking Pool (PoS)            | 8,500,000     | 10.00%     | Rewards for active delegators                                                     |
 | Halving Fund                  | 21,250,000    | 25.00%     | Reward pool for 5-year halving cycles                                             |
