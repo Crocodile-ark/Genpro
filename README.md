@@ -1,6 +1,6 @@
 # GXR Blockchain - Enhanced Immutable Deflationary System [Prototipe]
 
-**###⚠️ Prototype Only:**
+**|⚠️ Prototype Only:**
 *This is a developer prototype created under a personal GitHub account.
 GXR's complete and audited codebase will be open-sourced on the official GitHub prior to mainnet.*
 
