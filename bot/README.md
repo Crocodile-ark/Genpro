@@ -338,17 +338,6 @@ systemctl restart gxr-bot
 
 ## 🆘 Support
 
-### Documentation
-- [Installation Guide](docs/installation.md)
-- [Configuration Reference](docs/config.md)
-- [API Documentation](docs/api.md)
-- [Troubleshooting Guide](docs/troubleshooting.md)
-
-### Community
-- **Telegram**: @GXRValidators  
-- **Discord**: #validator-support
-- **GitHub Issues**: Report bugs here
-
 ### Emergency Contact
 - **Telegram**: @gxr_foundation
 - **Email**: gxrfoundation@gmail.com
