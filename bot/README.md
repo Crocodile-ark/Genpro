@@ -350,8 +350,8 @@ systemctl restart gxr-bot
 - **GitHub Issues**: Report bugs here
 
 ### Emergency Contact
-- **Telegram**: @GXREmergency
-- **Email**: validators@gxr.network
+- **Telegram**: @gxr_foundation
+- **Email**: gxrfoundation@gmail.com
 
 ---
 
