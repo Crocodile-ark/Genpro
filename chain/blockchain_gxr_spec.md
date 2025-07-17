@@ -1,7 +1,6 @@
 # GXR Blockchain Technical Specification
 
 ## Version: 2.0.0
-**Last Updated**: December 2024
 
 ---
 
@@ -767,6 +766,5 @@ This specification provides the technical foundation for a truly immutable, defl
 ---
 
 **Document Version**: 2.0.0  
-**Last Updated**: December 2024  
 **Next Review**: N/A (Immutable Specification)
 
