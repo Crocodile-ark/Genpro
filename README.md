@@ -378,7 +378,7 @@ make test-e2e
 ## Support
 
 ### Documentation
-- **Technical Specs**: See `docs/blockchain_gxr_spec.md`
+- **Technical Specs**: See `chain/blockchain_gxr_spec.md`
 - **Bot Guide**: See `bot/README.md`
 - **API Docs**: See `docs/api.md`
 
