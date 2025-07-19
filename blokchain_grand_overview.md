@@ -37,7 +37,7 @@ GXR is currently in active development. This grant aims to support:
 
 ---
 
-## 💰 Estimated Fund Allocation per Blockchain
+## 💰 Blockchain Fund Allocation Estimates
 
 To ensure transparency and fair distribution, each grant from partner blockchains will follow a baseline target of **$25,000 USD** (adjustable per network policy). Funds will be used proportionally as follows:
 
