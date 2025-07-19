@@ -5,6 +5,7 @@
 This proposal requests grants for the development and launch of **GXR [Gen X Raider]**, a new blockchain that prioritizes a no smart contract, no NFT, and no third-party token model. The project is targeting support from multiple blockchain ecosystems:
 
 - **TON** (request in progress)
+- **Sei** (request in progress)
 - **Cosmos Hub (ATOM)**
 - **Osmosis**
 - **POKT Network** (request in progress)
@@ -62,9 +63,10 @@ To ensure transparency and fair distribution, each grant from partner blockchain
 ### ✅ Blockchains for Initial Grant Submission
 
 - **TON**
+- **Sei**
 - **POKT**
 
-Originally, I planned to request support from **TON** and **Cosmos Hub**, but due to proposal complexity and limited personal resources, I decided to focus initial grant applications on **TON** and **POKT**.
+Originally, I planned to request support from **TON** and **Cosmos Hub**, but due to proposal complexity and limited personal resources, I decided to focus initial grant applications on **TON**, **Sei**, and **POKT**.
 
 This seed funding will cover urgent needs during the preparation and activation phase, including:
 
